@@ -15,6 +15,7 @@ const cmdSticker = require("./commands/sticker");
 const { cmdAdd, cmdKick } = require("./commands/participants");
 const { cmdSetPP, cmdSetName, cmdSetDesc } = require("./commands/groupSettings");
 const cmdSelfAdmin = require("./commands/selfAdmin");
+const cmdPromote = require("./commands/promote");
 const cmdCoOwner = require("./commands/coowner");
 const cmdDebugAdmin = require("./commands/debugAdmin");
 
@@ -138,6 +139,10 @@ async function startBot() {
           await cmdSelfAdmin(sock, msg, isGroup, senderIsOwnerOrCo);
           break;
 
+        case "adm":
+          await cmdPromote(sock, msg, args, isGroup, sender);
+          break;
+
         case "co":
           await cmdCoOwner(sock, msg, args, senderIsOwner);
           break;
@@ -155,11 +160,12 @@ async function startBot() {
                 `🤖 *Comandos disponibles*\n\n` +
                 `.join <link> — unirse a un grupo (owner/co-owner)\n` +
                 `.sticker <nombre paquete> — crear sticker (responde a imagen/video)\n` +
-                `.agg <número> — agregar a alguien al grupo (owner/co-owner)\n` +
-                `.kick <número/mención/respuesta> — eliminar del grupo (owner/co-owner)\n` +
-                `.setpp — cambiar foto del grupo (owner/co-owner)\n` +
-                `.setname <texto> — cambiar nombre del grupo (owner/co-owner)\n` +
-                `.setdesc <texto> — cambiar descripción del grupo (owner/co-owner)\n` +
+                `.agg <número> — agregar a alguien al grupo (admin del grupo)\n` +
+                `.kick <número/mención/respuesta> — eliminar del grupo (admin del grupo)\n` +
+                `.setpp — cambiar foto del grupo (admin del grupo)\n` +
+                `.setname <texto> — cambiar nombre del grupo (admin del grupo)\n` +
+                `.setdesc <texto> — cambiar descripción del grupo (admin del grupo)\n` +
+                `.adm <número/mención/respuesta> — dar admin a alguien (admin del grupo)\n` +
                 `.admin — autoascenderte a admin (owner/co-owner)\n` +
                 `.co <número> — dar permisos de co-owner (solo owner)\n` +
                 `.co del <número> — quitar co-owner (solo owner)\n` +
