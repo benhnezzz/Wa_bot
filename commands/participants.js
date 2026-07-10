@@ -1,4 +1,4 @@
-const { numberToJid, requireGroupAdmins, friendlyGroupError } = require("../lib/utils");
+const { numberToJid, jidToNumber, requireGroupAdmins, friendlyGroupError } = require("../lib/utils");
 
 // .agg 56977776666
 async function cmdAdd(sock, msg, args, isGroup, sender) {
@@ -87,4 +87,86 @@ async function cmdKick(sock, msg, args, isGroup, sender) {
   }
 }
 
-module.exports = { cmdAdd, cmdKick };
+// .vaciar — elimina a TODOS los participantes del grupo (menos el bot).
+// Permitido para: administradores del grupo, owner o co-owner (aunque no sean admin del grupo).
+// Pide confirmación explícita (.vaciar confirmar) porque es una acción destructiva e irreversible.
+async function cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo) {
+  const from = msg.key.remoteJid;
+
+  if (!isGroup) {
+    return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
+  }
+
+  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  if (!senderIsAdmin && !senderIsOwnerOrCo) {
+    return sock.sendMessage(
+      from,
+      { text: "⛔ Solo un administrador del grupo, el owner o un co-owner pueden usar este comando." },
+      { quoted: msg }
+    );
+  }
+  if (!botIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
+  }
+
+  if ((args[0] || "").toLowerCase() !== "confirmar") {
+    return sock.sendMessage(
+      from,
+      {
+        text:
+          "⚠️ Esto va a ELIMINAR A TODOS los participantes del grupo (menos el bot). No se puede deshacer.\n\n" +
+          "Si estás seguro, escribe: *.vaciar confirmar*",
+      },
+      { quoted: msg }
+    );
+  }
+
+  let metadata;
+  try {
+    metadata = await sock.groupMetadata(from);
+  } catch (err) {
+    return sock.sendMessage(from, { text: friendlyGroupError(err) }, { quoted: msg });
+  }
+
+  const myNumber = jidToNumber(sock.user.id);
+  const targets = metadata.participants
+    .map((p) => p.id)
+    .filter((jid) => jidToNumber(jid) !== myNumber);
+
+  if (targets.length === 0) {
+    return sock.sendMessage(from, { text: "ℹ️ No hay a quién eliminar (el grupo ya solo tiene al bot)." }, { quoted: msg });
+  }
+
+  await sock.sendMessage(from, { text: `🧹 Vaciando grupo… ${targets.length} participante(s) a eliminar.` }, { quoted: msg });
+
+  // Se remueve en tandas pequeñas con pausas para reducir el riesgo de que WhatsApp
+  // marque al bot como spam/abuso por remociones masivas muy rápidas.
+  const BATCH_SIZE = 5;
+  const DELAY_MS = 2000;
+  let removed = 0;
+  let failed = 0;
+
+  for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+    const batch = targets.slice(i, i + BATCH_SIZE);
+    try {
+      const result = await sock.groupParticipantsUpdate(from, batch, "remove");
+      for (const r of result) {
+        if (r.status === "200") removed++;
+        else failed++;
+      }
+    } catch {
+      failed += batch.length;
+    }
+    if (i + BATCH_SIZE < targets.length) {
+      await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+    }
+  }
+
+  await sock.sendMessage(
+    from,
+    { text: `✅ Grupo vaciado. Eliminados: ${removed}. Fallidos (ej. el creador del grupo no se puede quitar): ${failed}.` },
+    { quoted: msg }
+  );
+}
+
+module.exports = { cmdAdd, cmdKick, cmdVaciar };
