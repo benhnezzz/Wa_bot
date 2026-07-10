@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.9",
-    "jimp": "^0.22.12",
+    "jimp": "^1.6.0",
     "node-webpmux": "^3.1.7",
     "pino": "^9.3.2",
     "qrcode-terminal": "^0.12.0"
