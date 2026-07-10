@@ -193,7 +193,7 @@ async function startBot() {
                 `.sticker <nombre paquete> — crear sticker (responde a imagen/video)\n` +
                 `.agg <número> — agregar a alguien al grupo (admin del grupo)\n` +
                 `.kick <número/mención/respuesta> — eliminar del grupo (admin del grupo)\n` +
-                `.vaciar confirmar — eliminar a TODOS del grupo (admin, owner o co-owner)\n` +
+                `.vaciar confirmar — eliminar a TODOS del grupo (solo owner o co-owner)\n` +
                 `.setpp — cambiar foto del grupo (admin del grupo)\n` +
                 `.setname <texto> — cambiar nombre del grupo (admin del grupo)\n` +
                 `.setdesc <texto> — cambiar descripción del grupo (admin del grupo)\n` +
