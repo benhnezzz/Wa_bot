@@ -1,4 +1,4 @@
-const { numberToJid, isOwnerOrCoOwner, friendlyGroupError } = require("../lib/utils");
+const { numberToJid, requireGroupAdmins, friendlyGroupError } = require("../lib/utils");
 
 // .agg 56977776666
 async function cmdAdd(sock, msg, args, isGroup, sender) {
@@ -8,8 +8,12 @@ async function cmdAdd(sock, msg, args, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  if (!isOwnerOrCoOwner(sender)) {
-    return sock.sendMessage(from, { text: "⛔ Solo el owner o un co-owner puede usar este comando." }, { quoted: msg });
+  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  if (!senderIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
+  }
+  if (!botIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
 
   const number = args[0];
@@ -46,8 +50,12 @@ async function cmdKick(sock, msg, args, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  if (!isOwnerOrCoOwner(sender)) {
-    return sock.sendMessage(from, { text: "⛔ Solo el owner o un co-owner puede usar este comando." }, { quoted: msg });
+  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  if (!senderIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
+  }
+  if (!botIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
 
   // Prioridad: mención > respuesta citada > número en el argumento

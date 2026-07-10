@@ -1,5 +1,5 @@
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
-const { isOwnerOrCoOwner, getQuotedMessage, friendlyGroupError } = require("../lib/utils");
+const { requireGroupAdmins, getQuotedMessage, friendlyGroupError } = require("../lib/utils");
 
 // .setpp (respondiendo a una imagen)
 async function cmdSetPP(sock, msg, isGroup, sender) {
@@ -9,8 +9,12 @@ async function cmdSetPP(sock, msg, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  if (!isOwnerOrCoOwner(sender)) {
-    return sock.sendMessage(from, { text: "⛔ Solo el owner o un co-owner puede usar este comando." }, { quoted: msg });
+  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  if (!senderIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
+  }
+  if (!botIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
 
   const quoted = getQuotedMessage(msg);
@@ -45,8 +49,12 @@ async function cmdSetName(sock, msg, args, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  if (!isOwnerOrCoOwner(sender)) {
-    return sock.sendMessage(from, { text: "⛔ Solo el owner o un co-owner puede usar este comando." }, { quoted: msg });
+  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  if (!senderIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
+  }
+  if (!botIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
 
   const newName = args.join(" ");
@@ -70,8 +78,12 @@ async function cmdSetDesc(sock, msg, args, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  if (!isOwnerOrCoOwner(sender)) {
-    return sock.sendMessage(from, { text: "⛔ Solo el owner o un co-owner puede usar este comando." }, { quoted: msg });
+  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  if (!senderIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
+  }
+  if (!botIsAdmin) {
+    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
 
   const newDesc = args.join(" ");

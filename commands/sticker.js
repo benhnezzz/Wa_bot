@@ -119,6 +119,9 @@ module.exports = async function cmdSticker(sock, msg, args) {
       }
     : msg;
 
+  // Reacciona con ⏳ al mensaje donde se pidió el sticker, mientras se procesa
+  await sock.sendMessage(from, { react: { text: "⏳", key: msg.key } });
+
   try {
     const mediaBuffer = await downloadMediaMessage(targetMsg, "buffer", {});
     const webpBuffer = await convertToWebp(mediaBuffer, isVideo);
@@ -131,7 +134,12 @@ module.exports = async function cmdSticker(sock, msg, args) {
     );
 
     await sock.sendMessage(from, { sticker: finalBuffer }, { quoted: msg });
+
+    // Reacciona con ✅ una vez que el sticker fue enviado
+    await sock.sendMessage(from, { react: { text: "✅", key: msg.key } });
   } catch (err) {
+    // Quita el ⏳ y avisa que falló
+    await sock.sendMessage(from, { react: { text: "❌", key: msg.key } });
     await sock.sendMessage(
       from,
       { text: `❌ No pude crear el sticker: ${err.message}` },
