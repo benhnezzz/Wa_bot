@@ -4,14 +4,14 @@ module.exports = {
   // Se puede sobreescribir con la variable de entorno OWNER_NUMBERS separada por comas.
   OWNER_NUMBERS: process.env.OWNER_NUMBERS
     ? process.env.OWNER_NUMBERS.split(",")
-    : ["56977776666"],
+    : ["56512222222"],
 
   // Prefijo de los comandos
   PREFIX: ".",
 
   // Nombre por defecto del paquete de stickers si no se especifica uno
-  DEFAULT_PACK_NAME: "Mi Bot",
-  DEFAULT_AUTHOR: "WA-Bot",
+  DEFAULT_PACK_NAME: "brombot",
+  DEFAULT_AUTHOR: " ",
 
   // Si es true, cuando el owner entra a un grupo donde el bot YA es admin,
   // el bot lo asciende automáticamente
