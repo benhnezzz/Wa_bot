@@ -12,12 +12,13 @@ const { isOwner, isOwnerOrCoOwner, getMessageText, isBotAdmin, jidToNumber } = r
 
 const cmdJoin = require("./commands/join");
 const cmdSticker = require("./commands/sticker");
-const { cmdAdd, cmdKick } = require("./commands/participants");
+const { cmdAdd, cmdKick, cmdVaciar } = require("./commands/participants");
 const { cmdSetPP, cmdSetName, cmdSetDesc } = require("./commands/groupSettings");
 const cmdSelfAdmin = require("./commands/selfAdmin");
 const cmdPromote = require("./commands/promote");
 const cmdCoOwner = require("./commands/coowner");
 const cmdDebugAdmin = require("./commands/debugAdmin");
+const { cmdMp3, cmdMp4, cmdTik, cmdIg } = require("./commands/download");
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
@@ -129,6 +130,26 @@ async function startBot() {
           await cmdKick(sock, msg, args, isGroup, sender);
           break;
 
+        case "vaciar":
+          await cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo);
+          break;
+
+        case "mp3":
+          await cmdMp3(sock, msg, args);
+          break;
+
+        case "mp4":
+          await cmdMp4(sock, msg, args);
+          break;
+
+        case "tik":
+          await cmdTik(sock, msg, args);
+          break;
+
+        case "ig":
+          await cmdIg(sock, msg, args);
+          break;
+
         case "setpp":
           await cmdSetPP(sock, msg, isGroup, sender);
           break;
@@ -168,6 +189,7 @@ async function startBot() {
                 `.sticker <nombre paquete> — crear sticker (responde a imagen/video)\n` +
                 `.agg <número> — agregar a alguien al grupo (admin del grupo)\n` +
                 `.kick <número/mención/respuesta> — eliminar del grupo (admin del grupo)\n` +
+                `.vaciar confirmar — eliminar a TODOS del grupo (admin, owner o co-owner)\n` +
                 `.setpp — cambiar foto del grupo (admin del grupo)\n` +
                 `.setname <texto> — cambiar nombre del grupo (admin del grupo)\n` +
                 `.setdesc <texto> — cambiar descripción del grupo (admin del grupo)\n` +
@@ -175,7 +197,11 @@ async function startBot() {
                 `.admin — autoascenderte a admin (owner/co-owner)\n` +
                 `.co <número> — dar permisos de co-owner (solo owner)\n` +
                 `.co del <número> — quitar co-owner (solo owner)\n` +
-                `.co list — ver co-owners actuales`,
+                `.co list — ver co-owners actuales\n` +
+                `.mp3 <link YouTube> — descargar audio MP3\n` +
+                `.mp4 <link YouTube> — descargar video MP4\n` +
+                `.tik <link TikTok> — descargar video de TikTok\n` +
+                `.ig <link Instagram> — descargar video de Instagram`,
             },
             { quoted: msg }
           );
