@@ -1,16 +1,16 @@
 // Corrige un bug de @whiskeysockets/baileys al detectar la librería "jimp".
 //
-// Baileys revisa si jimp está disponible con algo como:
-//   typeof Lib.jimp?.Jimp === 'object'
+// El archivo messages-media.js tiene DOS lugares con el texto
+// "No image processing library available":
+//   1) Dentro de getImageProcessingLibrary() -- no es el problema.
+//   2) Dentro de extractImageThumb() / generateProfilePicture(), que usan:
+//        typeof Lib.jimp?.Jimp === 'object'
+//      Ese es el que falla: en jimp v1.x, "Jimp" es una CLASE (typeof 'function'),
+//      no un objeto plano, así que esa comparación nunca es true.
 //
-// Pero en jimp v1.x, "Jimp" es una CLASE, así que su typeof es 'function', no 'object'.
-// Por eso Baileys nunca detecta jimp y tira "No image processing library available"
-// aunque jimp esté bien instalado.
-//
-// Este script busca esa comparación en el código ya instalado de Baileys (con una regex
-// tolerante a comillas simples/dobles y espacios) y la corrige para que acepte tanto
-// 'object' como 'function'. Se corre solo (via "postinstall" en package.json) cada vez
-// que haces npm install, así que no hay que tocar nada a mano.
+// Este script busca específicamente el patrón "Lib.jimp?.Jimp === 'object'" (tolerante
+// a comillas simples/dobles y espacios) y lo corrige para que acepte también 'function'.
+// Se corre solo (via "postinstall" en package.json) cada vez que haces npm install.
 
 const fs = require("fs");
 const path = require("path");
@@ -20,8 +20,10 @@ const CANDIDATE_PATHS = [
   "node_modules/baileys/lib/Utils/messages-media.js",
 ];
 
-// Coincide con: typeof Lib.jimp?.Jimp === 'object'  (comillas simples o dobles, con o sin espacios raros)
+// Coincide con: typeof Lib.jimp?.Jimp === 'object'  (comillas simples o dobles)
 const PATTERN = /typeof\s+Lib\.jimp\?\.Jimp\s*===\s*(['"])object\1/g;
+// Ya corregido si aparece el "||" justo después apuntando a 'function'
+const ALREADY_FIXED = /Lib\.jimp\?\.Jimp\s*===\s*(['"])object\1\s*\|\|\s*typeof\s+Lib\.jimp\?\.Jimp\s*===\s*(['"])function\2/;
 
 let patchedAny = false;
 let foundFileButNoMatch = false;
@@ -32,21 +34,33 @@ for (const rel of CANDIDATE_PATHS) {
 
   const content = fs.readFileSync(filePath, "utf-8");
 
-  const alreadyFixedCount = (content.match(/Lib\.jimp\?\.Jimp\s*===\s*(['"])object\1\s*\|\|/g) || []).length;
-  const matches = content.match(PATTERN) || [];
-
-  if (matches.length === 0 && alreadyFixedCount > 0) {
+  if (ALREADY_FIXED.test(content)) {
     console.log(`✅ [patch-baileys-jimp] ${rel} ya estaba corregido.`);
     patchedAny = true;
     continue;
   }
 
+  const matches = content.match(PATTERN) || [];
+
   if (matches.length === 0) {
     foundFileButNoMatch = true;
-    // Diagnóstico: muestra el fragmento real alrededor del error para comparar a mano.
-    const idx = content.indexOf("No image processing library available");
-    const snippet = idx >= 0 ? content.slice(Math.max(0, idx - 400), idx + 60) : "(no se encontró ni el mensaje de error en el archivo)";
-    console.log(`ℹ️  [patch-baileys-jimp] ${rel} no tiene el patrón esperado exacto. Fragmento real encontrado:\n${snippet}`);
+    // Diagnóstico: busca TODAS las apariciones de "Lib.jimp?.Jimp" (no del mensaje de
+    // error, que aparece dos veces y puede confundir) y muestra el contexto real.
+    const needle = "Lib.jimp?.Jimp";
+    let from = 0;
+    let shown = 0;
+    let out = "";
+    while (shown < 5) {
+      const idx = content.indexOf(needle, from);
+      if (idx === -1) break;
+      out += `\n--- ocurrencia en la posición ${idx} ---\n` + content.slice(Math.max(0, idx - 150), idx + 150) + "\n";
+      from = idx + needle.length;
+      shown++;
+    }
+    console.log(
+      `ℹ️  [patch-baileys-jimp] ${rel}: no coincidió el patrón exacto. ` +
+      (out ? `Ocurrencias de "Lib.jimp?.Jimp" encontradas:${out}` : `Ni siquiera se encontró el texto "Lib.jimp?.Jimp" en el archivo.`)
+    );
     continue;
   }
 
@@ -61,7 +75,7 @@ for (const rel of CANDIDATE_PATHS) {
 
 if (!patchedAny) {
   if (foundFileButNoMatch) {
-    console.log("⚠️  [patch-baileys-jimp] Se encontró el archivo pero no el patrón esperado. Copia el fragmento de arriba y compártelo.");
+    console.log("⚠️  [patch-baileys-jimp] Se encontró el archivo pero no el patrón esperado. Copia el texto de arriba y compártelo.");
   } else {
     console.log("⚠️  [patch-baileys-jimp] No se encontró el archivo de Baileys a corregir. Si .setpp sigue fallando, avisa.");
   }
