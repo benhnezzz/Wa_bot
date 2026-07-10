@@ -8,7 +8,7 @@ const pino = require("pino");
 const qrcode = require("qrcode-terminal");
 
 const config = require("./config");
-const { isOwner, isOwnerOrCoOwner, getMessageText, isBotAdmin, jidToNumber } = require("./lib/utils");
+const { isOwner, isOwnerOrCoOwner, getMessageText, isBotAdmin, jidToNumber, requireGroupAdmins } = require("./lib/utils");
 
 const cmdJoin = require("./commands/join");
 const cmdSticker = require("./commands/sticker");
@@ -183,34 +183,52 @@ async function startBot() {
           break;
 
         case "menu":
-        case "help":
-          await sock.sendMessage(
-            from,
-            {
-              text:
-                `🤖 *Comandos disponibles*\n\n` +
-                `.join <link> — unirse a un grupo (owner/co-owner)\n` +
-                `.sticker <nombre paquete> — crear sticker (responde a imagen/video)\n` +
-                `.agg <número> — agregar a alguien al grupo (admin del grupo)\n` +
-                `.kick <número/mención/respuesta> — eliminar del grupo (admin del grupo)\n` +
-                `.vaciar confirmar — eliminar a TODOS del grupo (solo owner o co-owner)\n` +
-                `.setpp — cambiar foto del grupo (admin del grupo)\n` +
-                `.setname <texto> — cambiar nombre del grupo (admin del grupo)\n` +
-                `.setdesc <texto> — cambiar descripción del grupo (admin del grupo)\n` +
-                `.adm <número/mención/respuesta> — dar admin a alguien (admin del grupo)\n` +
-                `.admin — autoascenderte a admin (owner/co-owner)\n` +
-                `.co <número> — dar permisos de co-owner (solo owner)\n` +
-                `.co del <número> — quitar co-owner (solo owner)\n` +
-                `.co list — ver co-owners actuales\n` +
-                `.mp3 <link YouTube> — descargar audio MP3\n` +
-                `.mp4 <link YouTube> — descargar video MP4\n` +
-                `.tik <link TikTok> — descargar video de TikTok\n` +
-                `.ig <link Instagram> — descargar video de Instagram\n` +
-                `.sc <link SoundCloud> — descargar audio MP3`,
-            },
-            { quoted: msg }
-          );
+        case "help": {
+          let senderIsGroupAdmin = false;
+          if (isGroup) {
+            const { senderIsAdmin } = await requireGroupAdmins(sock, from, sender);
+            senderIsGroupAdmin = senderIsAdmin;
+          }
+
+          const memberCommands =
+            `.sticker <nombre paquete> — crear sticker (responde a imagen/video)\n` +
+            `.mp3 <link YouTube> — descargar audio MP3\n` +
+            `.mp4 <link YouTube> — descargar video MP4\n` +
+            `.tik <link TikTok> — descargar video de TikTok\n` +
+            `.ig <link Instagram> — descargar video de Instagram\n` +
+            `.sc <link SoundCloud> — descargar audio MP3\n` +
+            `.menu / .help — ver esta lista`;
+
+          const adminCommands =
+            `.agg <número> — agregar a alguien al grupo\n` +
+            `.kick <número/mención/respuesta> — eliminar del grupo\n` +
+            `.setpp — cambiar foto del grupo (responde a una imagen)\n` +
+            `.setname <texto> — cambiar nombre del grupo\n` +
+            `.setdesc <texto> — cambiar descripción del grupo\n` +
+            `.adm <número/mención/respuesta> — dar admin a alguien`;
+
+          const ownerCommands =
+            `.join <link> — unirse a un grupo\n` +
+            `.admin — autoascenderte a admin\n` +
+            `.vaciar confirmar — eliminar a TODOS del grupo\n` +
+            `.co <número> — dar permisos de co-owner\n` +
+            `.co del <número> — quitar co-owner\n` +
+            `.co list — ver co-owners actuales\n` +
+            `.debugadmin — diagnóstico de admins del grupo`;
+
+          let text = `🤖 *Comandos disponibles*\n\n${memberCommands}`;
+
+          if (senderIsOwnerOrCo) {
+            text +=
+              `\n\n👮 *Comandos de administrador*\n${adminCommands}` +
+              `\n\n👑 *Comandos de owner*\n${ownerCommands}`;
+          } else if (senderIsGroupAdmin) {
+            text += `\n\n👮 *Comandos de administrador*\n${adminCommands}`;
+          }
+
+          await sock.sendMessage(from, { text }, { quoted: msg });
           break;
+        }
 
         default:
           break;
