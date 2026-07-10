@@ -1,17 +1,16 @@
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
-const { isBotAdmin, getQuotedMessage } = require("../lib/utils");
+const { isOwnerOrCoOwner, getQuotedMessage, friendlyGroupError } = require("../lib/utils");
 
 // .setpp (respondiendo a una imagen)
-async function cmdSetPP(sock, msg, isGroup) {
+async function cmdSetPP(sock, msg, isGroup, sender) {
   const from = msg.key.remoteJid;
 
   if (!isGroup) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  const botAdmin = await isBotAdmin(sock, from);
-  if (!botAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser admin para cambiar la foto del grupo." }, { quoted: msg });
+  if (!isOwnerOrCoOwner(sender)) {
+    return sock.sendMessage(from, { text: "⛔ Solo el owner o un co-owner puede usar este comando." }, { quoted: msg });
   }
 
   const quoted = getQuotedMessage(msg);
@@ -34,21 +33,20 @@ async function cmdSetPP(sock, msg, isGroup) {
     await sock.updateProfilePicture(from, buffer);
     await sock.sendMessage(from, { text: "✅ Foto del grupo actualizada." }, { quoted: msg });
   } catch (err) {
-    await sock.sendMessage(from, { text: `❌ Error al cambiar la foto: ${err.message}` }, { quoted: msg });
+    await sock.sendMessage(from, { text: friendlyGroupError(err) }, { quoted: msg });
   }
 }
 
 // .setname <nuevo nombre>
-async function cmdSetName(sock, msg, args, isGroup) {
+async function cmdSetName(sock, msg, args, isGroup, sender) {
   const from = msg.key.remoteJid;
 
   if (!isGroup) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  const botAdmin = await isBotAdmin(sock, from);
-  if (!botAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser admin para cambiar el nombre del grupo." }, { quoted: msg });
+  if (!isOwnerOrCoOwner(sender)) {
+    return sock.sendMessage(from, { text: "⛔ Solo el owner o un co-owner puede usar este comando." }, { quoted: msg });
   }
 
   const newName = args.join(" ");
@@ -60,21 +58,20 @@ async function cmdSetName(sock, msg, args, isGroup) {
     await sock.groupUpdateSubject(from, newName);
     await sock.sendMessage(from, { text: "✅ Nombre del grupo actualizado." }, { quoted: msg });
   } catch (err) {
-    await sock.sendMessage(from, { text: `❌ Error: ${err.message}` }, { quoted: msg });
+    await sock.sendMessage(from, { text: friendlyGroupError(err) }, { quoted: msg });
   }
 }
 
 // .setdesc <nueva descripción>
-async function cmdSetDesc(sock, msg, args, isGroup) {
+async function cmdSetDesc(sock, msg, args, isGroup, sender) {
   const from = msg.key.remoteJid;
 
   if (!isGroup) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  const botAdmin = await isBotAdmin(sock, from);
-  if (!botAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser admin para cambiar la descripción." }, { quoted: msg });
+  if (!isOwnerOrCoOwner(sender)) {
+    return sock.sendMessage(from, { text: "⛔ Solo el owner o un co-owner puede usar este comando." }, { quoted: msg });
   }
 
   const newDesc = args.join(" ");
@@ -86,7 +83,7 @@ async function cmdSetDesc(sock, msg, args, isGroup) {
     await sock.groupUpdateDescription(from, newDesc);
     await sock.sendMessage(from, { text: "✅ Descripción del grupo actualizada." }, { quoted: msg });
   } catch (err) {
-    await sock.sendMessage(from, { text: `❌ Error: ${err.message}` }, { quoted: msg });
+    await sock.sendMessage(from, { text: friendlyGroupError(err) }, { quoted: msg });
   }
 }
 

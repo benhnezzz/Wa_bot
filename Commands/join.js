@@ -1,12 +1,12 @@
-const { extractInviteCode } = require("../lib/utils");
+const { extractInviteCode, isOwnerOrCoOwner } = require("../lib/utils");
 
-module.exports = async function cmdJoin(sock, msg, args, senderIsOwner) {
+module.exports = async function cmdJoin(sock, msg, args, sender) {
   const from = msg.key.remoteJid;
 
-  if (!senderIsOwner) {
+  if (!isOwnerOrCoOwner(sender)) {
     return sock.sendMessage(
       from,
-      { text: "⛔ Solo el owner puede usar este comando." },
+      { text: "⛔ Solo el owner o un co-owner puede usar este comando." },
       { quoted: msg }
     );
   }

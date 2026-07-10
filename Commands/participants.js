@@ -1,21 +1,20 @@
-const { numberToJid, isBotAdmin, isParticipantAdmin } = require("../lib/utils");
+const { numberToJid, isOwnerOrCoOwner, friendlyGroupError } = require("../lib/utils");
 
 // .agg 56977776666
-async function cmdAdd(sock, msg, args, isGroup) {
+async function cmdAdd(sock, msg, args, isGroup, sender) {
   const from = msg.key.remoteJid;
 
   if (!isGroup) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
+  if (!isOwnerOrCoOwner(sender)) {
+    return sock.sendMessage(from, { text: "⛔ Solo el owner o un co-owner puede usar este comando." }, { quoted: msg });
+  }
+
   const number = args[0];
   if (!number) {
     return sock.sendMessage(from, { text: "📌 Uso: .agg <número, ej: 56977776666>" }, { quoted: msg });
-  }
-
-  const botAdmin = await isBotAdmin(sock, from);
-  if (!botAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser admin del grupo para agregar gente." }, { quoted: msg });
   }
 
   const jid = numberToJid(number);
@@ -35,21 +34,20 @@ async function cmdAdd(sock, msg, args, isGroup) {
       await sock.sendMessage(from, { text: `✅ +${number} agregado al grupo.` }, { quoted: msg });
     }
   } catch (err) {
-    await sock.sendMessage(from, { text: `❌ Error al agregar: ${err.message}` }, { quoted: msg });
+    await sock.sendMessage(from, { text: friendlyGroupError(err) }, { quoted: msg });
   }
 }
 
 // .kick (respondiendo a un mensaje del usuario o mencionándolo) o .kick 56977776666
-async function cmdKick(sock, msg, args, isGroup) {
+async function cmdKick(sock, msg, args, isGroup, sender) {
   const from = msg.key.remoteJid;
 
   if (!isGroup) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  const botAdmin = await isBotAdmin(sock, from);
-  if (!botAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser admin del grupo para eliminar gente." }, { quoted: msg });
+  if (!isOwnerOrCoOwner(sender)) {
+    return sock.sendMessage(from, { text: "⛔ Solo el owner o un co-owner puede usar este comando." }, { quoted: msg });
   }
 
   // Prioridad: mención > respuesta citada > número en el argumento
@@ -62,7 +60,7 @@ async function cmdKick(sock, msg, args, isGroup) {
   } else if (quotedParticipant) {
     targetJid = quotedParticipant;
   } else if (args[0]) {
-    targetJid = require("../lib/utils").numberToJid(args[0]);
+    targetJid = numberToJid(args[0]);
   }
 
   if (!targetJid) {
@@ -77,7 +75,7 @@ async function cmdKick(sock, msg, args, isGroup) {
     await sock.groupParticipantsUpdate(from, [targetJid], "remove");
     await sock.sendMessage(from, { text: `✅ Usuario eliminado del grupo.` }, { quoted: msg });
   } catch (err) {
-    await sock.sendMessage(from, { text: `❌ Error al eliminar: ${err.message}` }, { quoted: msg });
+    await sock.sendMessage(from, { text: friendlyGroupError(err) }, { quoted: msg });
   }
 }
 
