@@ -55,12 +55,16 @@ function isTikTokUrl(url) {
 function isInstagramUrl(url) {
   return /instagram\.com/i.test(url);
 }
+function isSoundCloudUrl(url) {
+  return /soundcloud\.com/i.test(url);
+}
 
 const USAGE = {
   mp3: "📌 Uso: .mp3 <link de YouTube>",
   mp4: "📌 Uso: .mp4 <link de YouTube>",
   tik: "📌 Uso: .tik <link de TikTok>",
   ig: "📌 Uso: .ig <link de Instagram>",
+  sc: "📌 Uso: .sc <link de SoundCloud>",
 };
 
 async function downloadAndSend(sock, msg, args, type) {
@@ -80,6 +84,9 @@ async function downloadAndSend(sock, msg, args, type) {
   if (type === "ig" && !isInstagramUrl(url)) {
     return sock.sendMessage(from, { text: "⚠️ Ese link no parece ser de Instagram." }, { quoted: msg });
   }
+  if (type === "sc" && !isSoundCloudUrl(url)) {
+    return sock.sendMessage(from, { text: "⚠️ Ese link no parece ser de SoundCloud." }, { quoted: msg });
+  }
 
   ensureTmpDir();
   const id = crypto.randomBytes(6).toString("hex");
@@ -88,7 +95,7 @@ async function downloadAndSend(sock, msg, args, type) {
   await sock.sendMessage(from, { text: "⏳ Descargando, dame un momento..." }, { quoted: msg });
 
   let ytArgs;
-  if (type === "mp3") {
+  if (type === "mp3" || type === "sc") {
     ytArgs = ["-x", "--audio-format", "mp3", "--audio-quality", "0", "--no-playlist", "-o", outputTemplate, url];
   } else if (type === "mp4") {
     // Limitado a 480p para no generar archivos demasiado pesados para WhatsApp
@@ -130,7 +137,7 @@ async function downloadAndSend(sock, msg, args, type) {
 
     const buffer = fs.readFileSync(filePath);
 
-    if (type === "mp3") {
+    if (type === "mp3" || type === "sc") {
       await sock.sendMessage(from, { audio: buffer, mimetype: "audio/mpeg", fileName: `${id}.mp3` }, { quoted: msg });
     } else {
       await sock.sendMessage(from, { video: buffer, mimetype: "video/mp4" }, { quoted: msg });
@@ -153,4 +160,5 @@ module.exports = {
   cmdMp4: (sock, msg, args) => downloadAndSend(sock, msg, args, "mp4"),
   cmdTik: (sock, msg, args) => downloadAndSend(sock, msg, args, "tik"),
   cmdIg: (sock, msg, args) => downloadAndSend(sock, msg, args, "ig"),
+  cmdSc: (sock, msg, args) => downloadAndSend(sock, msg, args, "sc"),
 };
