@@ -19,6 +19,7 @@ const cmdPromote = require("./commands/promote");
 const cmdCoOwner = require("./commands/coowner");
 const cmdDebugAdmin = require("./commands/debugAdmin");
 const { cmdMp3, cmdMp4, cmdTik, cmdIg, cmdSc } = require("./commands/download");
+const { buildMenu } = require("./lib/menu");
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
@@ -95,11 +96,21 @@ async function startBot() {
     const isGroup = from.endsWith("@g.us");
     const sender = isGroup ? msg.key.participant : from;
 
-    const body = getMessageText(msg);
-    if (!body || !body.startsWith(config.PREFIX)) return;
+    // Si el mensaje es porque tocaron una opción del menú interactivo (lista de WhatsApp),
+    // lo tratamos como si hubieran escrito ese comando (sin argumentos).
+    const listReplyId = msg.message?.listResponseMessage?.singleSelectReply?.selectedRowId;
 
-    const args = body.slice(config.PREFIX.length).trim().split(/\s+/);
-    const command = args.shift().toLowerCase();
+    let command, args;
+    if (listReplyId) {
+      command = listReplyId.toLowerCase();
+      args = [];
+    } else {
+      const body = getMessageText(msg);
+      if (!body || !body.startsWith(config.PREFIX)) return;
+      args = body.slice(config.PREFIX.length).trim().split(/\s+/);
+      command = args.shift().toLowerCase();
+    }
+
     const senderIsOwner = isOwner(sender);
     const senderIsOwnerOrCo = isOwnerOrCoOwner(sender);
 
@@ -190,43 +201,27 @@ async function startBot() {
             senderIsGroupAdmin = senderIsAdmin;
           }
 
-          const memberCommands =
-            `.sticker <nombre paquete> — crear sticker (responde a imagen/video)\n` +
-            `.mp3 <link YouTube> — descargar audio MP3\n` +
-            `.mp4 <link YouTube> — descargar video MP4\n` +
-            `.tik <link TikTok> — descargar video de TikTok\n` +
-            `.ig <link Instagram> — descargar video de Instagram\n` +
-            `.sc <link SoundCloud> — descargar audio MP3\n` +
-            `.menu / .help — ver esta lista`;
+          const { sections, plainText } = buildMenu({ senderIsOwnerOrCo, senderIsGroupAdmin });
 
-          const adminCommands =
-            `.agg <número> — agregar a alguien al grupo\n` +
-            `.kick <número/mención/respuesta> — eliminar del grupo\n` +
-            `.setpp — cambiar foto del grupo (responde a una imagen)\n` +
-            `.setname <texto> — cambiar nombre del grupo\n` +
-            `.setdesc <texto> — cambiar descripción del grupo\n` +
-            `.adm <número/mención/respuesta> — dar admin a alguien`;
-
-          const ownerCommands =
-            `.join <link> — unirse a un grupo\n` +
-            `.admin — autoascenderte a admin\n` +
-            `.vaciar confirmar — eliminar a TODOS del grupo\n` +
-            `.co <número> — dar permisos de co-owner\n` +
-            `.co del <número> — quitar co-owner\n` +
-            `.co list — ver co-owners actuales\n` +
-            `.debugadmin — diagnóstico de admins del grupo`;
-
-          let text = `🤖 *Comandos disponibles*\n\n${memberCommands}`;
-
-          if (senderIsOwnerOrCo) {
-            text +=
-              `\n\n👮 *Comandos de administrador*\n${adminCommands}` +
-              `\n\n👑 *Comandos de owner*\n${ownerCommands}`;
-          } else if (senderIsGroupAdmin) {
-            text += `\n\n👮 *Comandos de administrador*\n${adminCommands}`;
+          try {
+            await sock.sendMessage(
+              from,
+              {
+                text: "Elige un comando para ver cómo se usa 👇",
+                footer: "Bot de WhatsApp",
+                title: "🤖 Comandos disponibles",
+                buttonText: "Ver comandos",
+                sections,
+              },
+              { quoted: msg }
+            );
+          } catch (err) {
+            // El mensaje de lista interactiva no siempre funciona en cuentas personales
+            // de WhatsApp (es una función pensada para WhatsApp Business API). Si falla,
+            // no te quedas sin menú: cae automáticamente al de texto plano.
+            console.error("No se pudo enviar el menú interactivo, uso texto plano:", err.message);
+            await sock.sendMessage(from, { text: plainText }, { quoted: msg });
           }
-
-          await sock.sendMessage(from, { text }, { quoted: msg });
           break;
         }
 
