@@ -6,6 +6,10 @@ Bot hecho con [Baileys](https://github.com/WhiskeySockets/Baileys), la librería
 
 - Esto usa la **API no oficial** de WhatsApp. WhatsApp puede banear números que usen bots de forma agresiva o para spam. Úsalo con un número secundario y con criterio (no agregues/elimines gente en masa, no lo uses para hacer spam).
 - Necesitas Node.js 18 o superior instalado.
+- Necesitas **ffmpeg** instalado en el sistema (se usa para generar los stickers):
+  - Termux: `pkg install ffmpeg -y`
+  - Ubuntu/Debian: `sudo apt install ffmpeg -y`
+  - Mac: `brew install ffmpeg`
 
 ## Instalación
 
