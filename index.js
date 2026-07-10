@@ -8,13 +8,15 @@ const pino = require("pino");
 const qrcode = require("qrcode-terminal");
 
 const config = require("./config");
-const { isOwner, getMessageText, isBotAdmin, jidToNumber } = require("./lib/utils");
+const { isOwner, isOwnerOrCoOwner, getMessageText, isBotAdmin, jidToNumber } = require("./lib/utils");
 
 const cmdJoin = require("./commands/join");
 const cmdSticker = require("./commands/sticker");
 const { cmdAdd, cmdKick } = require("./commands/participants");
 const { cmdSetPP, cmdSetName, cmdSetDesc } = require("./commands/groupSettings");
 const cmdSelfAdmin = require("./commands/selfAdmin");
+const cmdCoOwner = require("./commands/coowner");
+const cmdDebugAdmin = require("./commands/debugAdmin");
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
@@ -97,11 +99,12 @@ async function startBot() {
     const args = body.slice(config.PREFIX.length).trim().split(/\s+/);
     const command = args.shift().toLowerCase();
     const senderIsOwner = isOwner(sender);
+    const senderIsOwnerOrCo = isOwnerOrCoOwner(sender);
 
     try {
       switch (command) {
         case "join":
-          await cmdJoin(sock, msg, args, senderIsOwner);
+          await cmdJoin(sock, msg, args, sender);
           break;
 
         case "sticker":
@@ -111,28 +114,36 @@ async function startBot() {
 
         case "agg":
         case "add":
-          await cmdAdd(sock, msg, args, isGroup);
+          await cmdAdd(sock, msg, args, isGroup, sender);
           break;
 
         case "kick":
         case "del":
-          await cmdKick(sock, msg, args, isGroup);
+          await cmdKick(sock, msg, args, isGroup, sender);
           break;
 
         case "setpp":
-          await cmdSetPP(sock, msg, isGroup);
+          await cmdSetPP(sock, msg, isGroup, sender);
           break;
 
         case "setname":
-          await cmdSetName(sock, msg, args, isGroup);
+          await cmdSetName(sock, msg, args, isGroup, sender);
           break;
 
         case "setdesc":
-          await cmdSetDesc(sock, msg, args, isGroup);
+          await cmdSetDesc(sock, msg, args, isGroup, sender);
           break;
 
         case "admin":
-          await cmdSelfAdmin(sock, msg, isGroup, senderIsOwner);
+          await cmdSelfAdmin(sock, msg, isGroup, senderIsOwnerOrCo);
+          break;
+
+        case "co":
+          await cmdCoOwner(sock, msg, args, senderIsOwner);
+          break;
+
+        case "debugadmin":
+          await cmdDebugAdmin(sock, msg, isGroup);
           break;
 
         case "menu":
@@ -142,14 +153,17 @@ async function startBot() {
             {
               text:
                 `🤖 *Comandos disponibles*\n\n` +
-                `.join <link> — unirse a un grupo (owner)\n` +
+                `.join <link> — unirse a un grupo (owner/co-owner)\n` +
                 `.sticker <nombre paquete> — crear sticker (responde a imagen/video)\n` +
-                `.agg <número> — agregar a alguien al grupo\n` +
-                `.kick <número/mención/respuesta> — eliminar del grupo\n` +
-                `.setpp — cambiar foto del grupo (responde a imagen)\n` +
-                `.setname <texto> — cambiar nombre del grupo\n` +
-                `.setdesc <texto> — cambiar descripción del grupo\n` +
-                `.admin — el owner se autoasciende (si el bot ya es admin)`,
+                `.agg <número> — agregar a alguien al grupo (owner/co-owner)\n` +
+                `.kick <número/mención/respuesta> — eliminar del grupo (owner/co-owner)\n` +
+                `.setpp — cambiar foto del grupo (owner/co-owner)\n` +
+                `.setname <texto> — cambiar nombre del grupo (owner/co-owner)\n` +
+                `.setdesc <texto> — cambiar descripción del grupo (owner/co-owner)\n` +
+                `.admin — autoascenderte a admin (owner/co-owner)\n` +
+                `.co <número> — dar permisos de co-owner (solo owner)\n` +
+                `.co del <número> — quitar co-owner (solo owner)\n` +
+                `.co list — ver co-owners actuales`,
             },
             { quoted: msg }
           );

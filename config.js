@@ -4,7 +4,7 @@ module.exports = {
   // Se puede sobreescribir con la variable de entorno OWNER_NUMBERS separada por comas.
   OWNER_NUMBERS: process.env.OWNER_NUMBERS
     ? process.env.OWNER_NUMBERS.split(",")
-    : ["56512222222"],
+    : ["56977776666"],
 
   // Prefijo de los comandos
   PREFIX: ".",

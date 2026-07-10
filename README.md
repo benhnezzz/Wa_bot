@@ -41,15 +41,24 @@ module.exports = {
 
 | Comando | Descripción | Requisito |
 |---|---|---|
-| `.join <link>` | Une el bot a un grupo desde un link de invitación | Solo owner |
+| `.join <link>` | Une el bot a un grupo desde un link de invitación | Owner o co-owner |
 | `.sticker <paquete>` / `.s` | Convierte imagen/video (respondido o enviado con caption) en sticker | — |
-| `.agg <número>` | Agrega un número al grupo (ej: `.agg 56977776666`) | Bot admin |
-| `.kick <número/mención/respuesta>` | Elimina a alguien del grupo | Bot admin |
-| `.setpp` | Cambia la foto del grupo (respondiendo a una imagen) | Bot admin |
-| `.setname <texto>` | Cambia el nombre del grupo | Bot admin |
-| `.setdesc <texto>` | Cambia la descripción del grupo | Bot admin |
-| `.admin` | El owner se autoasciende a admin | Owner + bot admin |
+| `.agg <número>` | Agrega un número al grupo (ej: `.agg 56977776666`) | Owner o co-owner |
+| `.kick <número/mención/respuesta>` | Elimina a alguien del grupo | Owner o co-owner |
+| `.setpp` | Cambia la foto del grupo (respondiendo a una imagen) | Owner o co-owner |
+| `.setname <texto>` | Cambia el nombre del grupo | Owner o co-owner |
+| `.setdesc <texto>` | Cambia la descripción del grupo | Owner o co-owner |
+| `.admin` | Te autoasciendes a admin | Owner o co-owner |
+| `.co <número>` | Da permisos de co-owner a ese número | Solo owner |
+| `.co del <número>` | Quita permisos de co-owner | Solo owner |
+| `.co list` | Muestra los co-owners actuales | Owner o co-owner |
 | `.menu` | Muestra la lista de comandos | — |
+
+Todos los comandos que necesitan que el bot sea admin del grupo (`.agg`, `.kick`, `.setpp`, `.setname`, `.setdesc`, `.admin`) **intentan la acción directamente** y muestran el error real que devuelve WhatsApp si el bot no tiene permisos, en vez de bloquear antes por una detección propia (que podía fallar con el sistema `@lid` nuevo de WhatsApp).
+
+## Co-owners
+
+Los co-owners se guardan en `data/coowners.json` (se crea solo, no se sube a GitHub por el `.gitignore`) y sobreviven a reinicios del bot. Solo el owner definido en `config.js` puede agregar o quitar co-owners — un co-owner no puede agregar a otro.
 
 ## Funciones automáticas
 
