@@ -90,6 +90,9 @@ async function cmdKick(sock, msg, args, isGroup, sender) {
 // .vaciar — elimina a TODOS los participantes del grupo (menos el bot).
 // Permitido para: administradores del grupo, owner o co-owner (aunque no sean admin del grupo).
 // Pide confirmación explícita (.vaciar confirmar) porque es una acción destructiva e irreversible.
+// .vaciar — elimina a TODOS los participantes del grupo (menos el bot).
+// Permitido SOLO para: owner o co-owner (ser admin del grupo ya no es suficiente).
+// Pide confirmación explícita (.vaciar confirmar) porque es una acción destructiva e irreversible.
 async function cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo) {
   const from = msg.key.remoteJid;
 
@@ -97,14 +100,15 @@ async function cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
-  if (!senderIsAdmin && !senderIsOwnerOrCo) {
+  if (!senderIsOwnerOrCo) {
     return sock.sendMessage(
       from,
-      { text: "⛔ Solo un administrador del grupo, el owner o un co-owner pueden usar este comando." },
+      { text: "⛔ Solo el owner o un co-owner pueden usar este comando." },
       { quoted: msg }
     );
   }
+
+  const { botIsAdmin } = await requireGroupAdmins(sock, from, sender);
   if (!botIsAdmin) {
     return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
