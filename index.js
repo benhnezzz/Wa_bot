@@ -18,7 +18,7 @@ const cmdSelfAdmin = require("./commands/selfAdmin");
 const cmdPromote = require("./commands/promote");
 const cmdCoOwner = require("./commands/coowner");
 const cmdDebugAdmin = require("./commands/debugAdmin");
-const { cmdMp3, cmdMp4, cmdTik, cmdIg } = require("./commands/download");
+const { cmdMp3, cmdMp4, cmdTik, cmdIg, cmdSc } = require("./commands/download");
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
@@ -150,6 +150,10 @@ async function startBot() {
           await cmdIg(sock, msg, args);
           break;
 
+        case "sc":
+          await cmdSc(sock, msg, args);
+          break;
+
         case "setpp":
           await cmdSetPP(sock, msg, isGroup, sender);
           break;
@@ -201,7 +205,8 @@ async function startBot() {
                 `.mp3 <link YouTube> — descargar audio MP3\n` +
                 `.mp4 <link YouTube> — descargar video MP4\n` +
                 `.tik <link TikTok> — descargar video de TikTok\n` +
-                `.ig <link Instagram> — descargar video de Instagram`,
+                `.ig <link Instagram> — descargar video de Instagram\n` +
+                `.sc <link SoundCloud> — descargar audio MP3`,
             },
             { quoted: msg }
           );
