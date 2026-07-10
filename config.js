@@ -1,10 +1,12 @@
 module.exports = {
   // Número(s) del owner en formato internacional SIN "+" ni espacios.
   // Ej: Chile +56 9 7777 6666 -> "56977776666"
+  // OJO: este es el número de la PERSONA dueña del bot (desde donde vas a escribirle
+  // los comandos), NO tiene que ser el mismo número donde está corriendo/vinculado el bot.
   // Se puede sobreescribir con la variable de entorno OWNER_NUMBERS separada por comas.
   OWNER_NUMBERS: process.env.OWNER_NUMBERS
     ? process.env.OWNER_NUMBERS.split(",")
-    : ["56941828322"],
+    : ["56512222222"],
 
   // Prefijo de los comandos
   PREFIX: ".",
