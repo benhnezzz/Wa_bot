@@ -20,10 +20,12 @@ const CANDIDATE_PATHS = [
   "node_modules/baileys/lib/Utils/messages-media.js",
 ];
 
-// Coincide con: typeof Lib.jimp?.Jimp === 'object'  (comillas simples o dobles)
-const PATTERN = /typeof\s+Lib\.jimp\?\.Jimp\s*===\s*(['"])object\1/g;
+// Coincide con: typeof lib.jimp?.Jimp === 'object' (comillas simples o dobles,
+// y con "lib"/"Lib" en cualquier combinación de mayúsculas/minúsculas, porque
+// distintas versiones de Baileys lo escriben distinto)
+const PATTERN = /typeof\s+(lib\.jimp\?\.Jimp)\s*===\s*(['"])object\2/gi;
 // Ya corregido si aparece el "||" justo después apuntando a 'function'
-const ALREADY_FIXED = /Lib\.jimp\?\.Jimp\s*===\s*(['"])object\1\s*\|\|\s*typeof\s+Lib\.jimp\?\.Jimp\s*===\s*(['"])function\2/;
+const ALREADY_FIXED = /lib\.jimp\?\.Jimp\s*===\s*(['"])object\1\s*\|\|\s*typeof\s+lib\.jimp\?\.Jimp\s*===\s*(['"])function\2/i;
 
 let patchedAny = false;
 let foundFileButNoMatch = false;
@@ -44,29 +46,28 @@ for (const rel of CANDIDATE_PATHS) {
 
   if (matches.length === 0) {
     foundFileButNoMatch = true;
-    // Diagnóstico: busca TODAS las apariciones de "Lib.jimp?.Jimp" (no del mensaje de
-    // error, que aparece dos veces y puede confundir) y muestra el contexto real.
-    const needle = "Lib.jimp?.Jimp";
-    let from = 0;
+    // Diagnóstico: busca TODAS las apariciones de "lib.jimp?.Jimp" (mayúsc./minúsc.
+    // indistinta; no del mensaje de error, que aparece dos veces y puede confundir)
+    // y muestra el contexto real.
+    const needleRegex = /lib\.jimp\?\.Jimp/gi;
     let shown = 0;
     let out = "";
-    while (shown < 5) {
-      const idx = content.indexOf(needle, from);
-      if (idx === -1) break;
+    let m;
+    while (shown < 5 && (m = needleRegex.exec(content)) !== null) {
+      const idx = m.index;
       out += `\n--- ocurrencia en la posición ${idx} ---\n` + content.slice(Math.max(0, idx - 150), idx + 150) + "\n";
-      from = idx + needle.length;
       shown++;
     }
     console.log(
       `ℹ️  [patch-baileys-jimp] ${rel}: no coincidió el patrón exacto. ` +
-      (out ? `Ocurrencias de "Lib.jimp?.Jimp" encontradas:${out}` : `Ni siquiera se encontró el texto "Lib.jimp?.Jimp" en el archivo.`)
+      (out ? `Ocurrencias de "lib.jimp?.Jimp" encontradas:${out}` : `Ni siquiera se encontró el texto "lib.jimp?.Jimp" en el archivo.`)
     );
     continue;
   }
 
   const newContent = content.replace(
     PATTERN,
-    (full, quote) => `(typeof Lib.jimp?.Jimp === ${quote}object${quote} || typeof Lib.jimp?.Jimp === ${quote}function${quote})`
+    (full, prefix, quote) => `(typeof ${prefix} === ${quote}object${quote} || typeof ${prefix} === ${quote}function${quote})`
   );
   fs.writeFileSync(filePath, newContent, "utf-8");
   console.log(`✅ [patch-baileys-jimp] ${rel} corregido correctamente (${matches.length} ocurrencia(s)).`);
