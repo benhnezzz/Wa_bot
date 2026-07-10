@@ -98,20 +98,39 @@ async function downloadAndSend(sock, msg, args, type) {
   if (type === "mp3" || type === "sc") {
     ytArgs = ["-x", "--audio-format", "mp3", "--audio-quality", "0", "--no-playlist", "-o", outputTemplate, url];
   } else if (type === "mp4") {
-    // Limitado a 480p para no generar archivos demasiado pesados para WhatsApp
+    // Limitado a 480p, y forzado a H.264/AAC (vcodec avc1) porque WhatsApp no reproduce
+    // bien video en VP9/AV1 aunque venga empaquetado en .mp4. --remux-video + faststart
+    // aseguran que el índice del archivo (moov atom) quede al inicio, que es lo que
+    // suele causar el error "algo falló con el archivo de video" en WhatsApp.
     ytArgs = [
       "-f",
-      "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[ext=mp4]/best",
+      "bestvideo[height<=480][vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[height<=480][vcodec^=avc1]/best[ext=mp4][vcodec^=avc1]/best[height<=480]/best",
       "--merge-output-format",
       "mp4",
+      "--remux-video",
+      "mp4",
+      "--postprocessor-args",
+      "ffmpeg:-movflags +faststart",
       "--no-playlist",
       "-o",
       outputTemplate,
       url,
     ];
   } else {
-    // tik / ig
-    ytArgs = ["-f", "best[ext=mp4]/best", "--no-playlist", "-o", outputTemplate, url];
+    // tik / ig — normalmente ya vienen en H.264/AAC, pero igual forzamos remux a mp4
+    // con faststart por si el contenedor original no es compatible con el player de WhatsApp.
+    ytArgs = [
+      "-f",
+      "best[ext=mp4]/best",
+      "--remux-video",
+      "mp4",
+      "--postprocessor-args",
+      "ffmpeg:-movflags +faststart",
+      "--no-playlist",
+      "-o",
+      outputTemplate,
+      url,
+    ];
   }
 
   let filePath;
