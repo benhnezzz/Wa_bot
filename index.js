@@ -102,6 +102,12 @@ async function startBot() {
     const senderIsOwner = isOwner(sender);
     const senderIsOwnerOrCo = isOwnerOrCoOwner(sender);
 
+    // 🔎 LOG TEMPORAL DE DIAGNÓSTICO — bórralo cuando el owner ya se detecte bien.
+    console.log(
+      `[debug] sender JID: "${sender}" | número extraído: "${jidToNumber(sender)}" | ` +
+      `OWNER_NUMBERS: ${JSON.stringify(config.OWNER_NUMBERS)} | ¿es owner?: ${senderIsOwner}`
+    );
+
     try {
       switch (command) {
         case "join":
