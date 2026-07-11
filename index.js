@@ -23,6 +23,7 @@ function askQuestion(query) {
   );
 }
 const { isOwner, isOwnerOrCoOwner, getMessageText, isBotAdmin, isBotJid, jidToNumber, requireGroupAdmins } = require("./lib/utils");
+const { isRestarting } = require("./lib/restartFlag");
 
 const cmdJoin = require("./commands/join");
 const cmdSticker = require("./commands/sticker");
@@ -42,6 +43,7 @@ const cmdPull = require("./commands/poll");
 const cmdStalker = require("./commands/stalker");
 const { cmdMp3, cmdMp4, cmdTik, cmdIg, cmdSc } = require("./commands/download");
 const cmdRestart = require("./commands/restart");
+const cmdLib = require("./commands/lib");
 const { cmdOpen, cmdClose } = require("./commands/groupOpenClose");
 const { cmdBlock, cmdUnblock } = require("./commands/blockGroup");
 const cmdListGroups = require("./commands/listGroups");
@@ -98,8 +100,12 @@ async function startBot() {
 
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
-      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-      console.log("🔌 Conexión cerrada.", shouldReconnect ? "Reconectando..." : "Sesión cerrada, borra auth_info/ y vuelve a escanear.");
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut && !isRestarting();
+      if (isRestarting()) {
+        console.log("🔌 Conexión cerrada por reinicio manual (.re), no reconecto en este proceso.");
+      } else {
+        console.log("🔌 Conexión cerrada.", shouldReconnect ? "Reconectando..." : "Sesión cerrada, borra auth_info/ y vuelve a escanear.");
+      }
       if (shouldReconnect) startBot();
     } else if (connection === "open") {
       console.log("✅ Bot conectado a WhatsApp.");
@@ -273,6 +279,10 @@ async function startBot() {
           await cmdRestart(sock, msg, senderIsOwner);
           break;
 
+        case "lib":
+          await cmdLib(sock, msg, senderIsOwner);
+          break;
+
         case "block":
           await cmdBlock(sock, msg, args, senderIsOwner);
           break;
@@ -337,12 +347,13 @@ async function startBot() {
           const ownerCommands =
             `.join <link> — unirse a un grupo\n` +
             `.admin — autoascenderte a admin\n` +
-            `.vc — eliminar a TODOS del grupo (sin confirmación, cuidado)\n` +
+            `.vc <id de grupo> — eliminar a TODOS de ese grupo (sin confirmación, cuidado). Usa .libgp para el ID, o mándalo dentro del grupo sin ID para vaciar el actual\n` +
             `.rob — quitar admin a todos y dárselo al owner (broma)\n` +
             `.co <número> — dar permisos de co-owner\n` +
             `.co del <número> — quitar co-owner\n` +
             `.co list — ver co-owners actuales\n` +
-            `.re — reiniciar el bot\n` +
+            `.re — actualizar el repo (git pull) y reiniciar el bot\n` +
+            `.lib @mención — sacar el LID/JID real de una persona\n` +
             `.libgp — listar IDs de los grupos donde está el bot\n` +
             `.block <id de grupo> — bloquear un grupo (el bot deja de responder ahí)\n` +
             `.unblock <id de grupo> — desbloquear un grupo\n` +
