@@ -22,6 +22,7 @@ const cmdCheckWhatsApp = require("./commands/checkWhatsApp");
 const cmdRob = require("./commands/rob");
 const cmdPing = require("./commands/ping");
 const cmdPull = require("./commands/poll");
+const cmdStalker = require("./commands/stalker");
 const { cmdMp3, cmdMp4, cmdTik, cmdIg, cmdSc } = require("./commands/download");
 
 async function startBot() {
@@ -145,6 +146,10 @@ async function startBot() {
           await cmdPull(sock, msg, args);
           break;
 
+        case "stalker":
+          await cmdStalker(sock, msg, args);
+          break;
+
         case "mp3":
           await cmdMp3(sock, msg, args);
           break;
@@ -215,6 +220,7 @@ async function startBot() {
             `.wa <número> — revisa si un número tiene cuenta de WhatsApp\n` +
             `.ping / .p — latencia y estado del bot\n` +
             `.pull p: <pregunta> o1: <op1> o2: <op2>... — crear encuesta y fijarla\n` +
+            `.stalker <nombre> — reporte gracioso de edad/género/nacionalidad probable\n` +
             `.menu / .help — ver esta lista`;
 
           const adminCommands =
