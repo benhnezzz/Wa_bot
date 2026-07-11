@@ -14,6 +14,7 @@ async function cmdSetPP(sock, msg, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
   }
   const directImage = msg.message?.imageMessage;
+  const quoted = getQuotedMessage(msg);
   const quotedImage = quoted?.message?.imageMessage;
 
   if (!directImage && !quotedImage) {
