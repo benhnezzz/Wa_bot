@@ -1,12 +1,15 @@
 const { getSuggestionsGroup } = require("../lib/suggestionsConfig");
-const { jidToNumber } = require("../lib/utils");
+const { jidToNumber, resolveRealNumber } = require("../lib/utils");
 
 // .sug <mensaje> — manda una sugerencia al grupo configurado con .set_sug.
 // La puede usar cualquiera, desde cualquier chat (privado o grupo).
 // Formato del mensaje que le llega al grupo de sugerencias:
-//   <número> - <nombre del que manda> -> <sugerencia>
+//   @lid - <nombre> + wa.me/<número real> -> <sugerencia>
+// El "+ wa.me/<número>" solo aparece si el bot logra resolver el número real
+// detrás del @lid (no siempre se puede, ver resolveRealNumber en lib/utils.js).
 module.exports = async function cmdSug(sock, msg, args, sender) {
   const from = msg.key.remoteJid;
+  const isGroup = from.endsWith("@g.us");
 
   const suggestion = args.join(" ").trim();
   if (!suggestion) {
@@ -22,13 +25,15 @@ module.exports = async function cmdSug(sock, msg, args, sender) {
     );
   }
 
-  const number = jidToNumber(sender);
+  const senderTag = `@${jidToNumber(sender)}`;
   const name = msg.pushName || "Sin nombre";
+  const realNumber = await resolveRealNumber(sock, sender, isGroup ? from : null);
+  const waPart = realNumber ? ` + wa.me/${realNumber}` : "";
 
-  const text = `📩 *Nueva sugerencia*\n\n${number} - ${name} -> ${suggestion}`;
+  const text = `📩 *Nueva sugerencia*\n\n${senderTag} - ${name}${waPart} -> ${suggestion}`;
 
   try {
-    await sock.sendMessage(suggestionsGroup, { text });
+    await sock.sendMessage(suggestionsGroup, { text, mentions: [sender] });
   } catch (err) {
     return sock.sendMessage(
       from,
