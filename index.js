@@ -32,6 +32,7 @@ const cmdSelfAdmin = require("./commands/selfAdmin");
 const cmdPromote = require("./commands/promote");
 const cmdDemote = require("./commands/demote");
 const cmdCoOwner = require("./commands/coowner");
+const cmdOwner = require("./commands/owner");
 const cmdAntilink = require("./commands/antilink");
 const cmdDebugAdmin = require("./commands/debugAdmin");
 const cmdCheckWhatsApp = require("./commands/checkWhatsApp");
@@ -263,6 +264,10 @@ async function startBot() {
           await cmdCheckWhatsApp(sock, msg, args);
           break;
 
+        case "owner":
+          await cmdOwner(sock, msg);
+          break;
+
         case "menu":
         case "help": {
           let senderIsGroupAdmin = false;
@@ -282,6 +287,7 @@ async function startBot() {
             `.ping / .p — latencia y estado del bot\n` +
             `.pull p: <pregunta> o1: <op1> o2: <op2>... — crear encuesta y fijarla\n` +
             `.stalker <nombre> — reporte gracioso de edad/género/nacionalidad probable\n` +
+            `.owner — ver contacto del owner y co-owners\n` +
             `.menu / .help — ver esta lista`;
 
           const adminCommands =

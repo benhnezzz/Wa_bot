@@ -1,18 +1,24 @@
 module.exports = {
-  // Número(s) del owner en formato internacional SIN "+" ni espacios.
-  // Ej: Chile +56 9 7777 6666 -> "56977776666"
-  // OJO: este es el número de la PERSONA dueña del bot (desde donde vas a escribirle
-  // los comandos), NO tiene que ser el mismo número donde está corriendo/vinculado el bot.
+  // Cada owner tiene su número real y, opcionalmente, uno o más "lid" (el ID anónimo
+  // interno que WhatsApp usa a veces en vez del número real -- ver nota abajo).
   //
-  // IMPORTANTE sobre WhatsApp "LID": WhatsApp ahora identifica a algunas cuentas con un ID
-  // anónimo interno (formato "12345@lid") en vez del número de teléfono real. Si el bot no
-  // te reconoce como owner usando tu número, corre el bot, escríbele un comando y revisa la
-  // consola: vas a ver una línea "[debug] sender JID: ...". Copia ese identificador (la parte
-  // antes de "@lid" o "@s.whatsapp.net") y agrégalo aquí tal cual, junto a tu número.
-  // Se puede sobreescribir con la variable de entorno OWNER_NUMBERS separada por comas.
-  OWNER_NUMBERS: process.env.OWNER_NUMBERS
-    ? process.env.OWNER_NUMBERS.split(",")
-    : ["56512222222", "79401697992881", "148039671009295"],
+  // - number: tu número real de WhatsApp. Se usa para reconocerte como owner Y para
+  //           mostrarlo en comandos como .owner (ej: link wa.me/tunumero).
+  // - lids:   uno o más identificadores @lid que WhatsApp te haya asignado. Solo hacen
+  //           falta si el bot no te reconoce usando tu número real (algunos grupos/cuentas
+  //           usan @lid en vez del número). Corre .debugadmin en un grupo para ver tu lid
+  //           actual si no estás seguro.
+  //
+  // Se puede sobreescribir con las variables de entorno OWNER_NUMBER y OWNER_LIDS
+  // (esta última separada por comas).
+  OWNERS: [
+    {
+      number: process.env.OWNER_NUMBER || "56512222222",
+      lids: process.env.OWNER_LIDS
+        ? process.env.OWNER_LIDS.split(",")
+        : ["79401697992881", "148039671009295"],
+    },
+  ],
 
   // Número de WhatsApp DEL BOT (el que se va a vincular), en formato
   // internacional SIN "+" ni espacios. Ej: "56912345678".
