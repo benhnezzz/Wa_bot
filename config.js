@@ -25,8 +25,8 @@ module.exports = {
   PREFIX: ".",
 
   // Nombre por defecto del paquete de stickers si no se especifica uno
-  DEFAULT_PACK_NAME: "Mi Bot",
-  DEFAULT_AUTHOR: "WA-Bot",
+  DEFAULT_PACK_NAME: "Bromingo",
+  DEFAULT_AUTHOR: "Bro-Bot",
 
   // Si es true, cuando el owner entra a un grupo donde el bot YA es admin,
   // el bot lo asciende automáticamente
