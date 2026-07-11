@@ -49,6 +49,8 @@ module.exports = {
 | `.setname <texto>` | Cambia el nombre del grupo | Owner o co-owner |
 | `.setdesc <texto>` | Cambia la descripción del grupo | Owner o co-owner |
 | `.admin` | Te autoasciendes a admin | Owner o co-owner |
+| `.promote <número/mención/respuesta>` | Da admin a alguien (menciona a quien lo pidió y a quien lo recibió) | Admin del grupo |
+| `.demote <número/mención/respuesta>` | Quita el admin a alguien (menciona a quien lo pidió y a quien lo perdió) | Admin del grupo |
 | `.co <número>` | Da permisos de co-owner a ese número | Solo owner |
 | `.co del <número>` | Quita permisos de co-owner | Solo owner |
 | `.co list` | Muestra los co-owners actuales | Owner o co-owner |
@@ -62,7 +64,7 @@ Los co-owners se guardan en `data/coowners.json` (se crea solo, no se sube a Git
 
 ## Funciones automáticas
 
-- **Aviso de admin**: cada vez que alguien da o quita admin dentro de un grupo, el bot manda un mensaje etiquetando (mencionando) tanto a quien lo dio/quitó como a quien lo recibió.
+- **Aviso de admin**: si alguien da o quita admin manualmente desde la app de WhatsApp, el bot manda un mensaje mencionando tanto a quien lo dio/quitó como a quien lo recibió. Si el cambio viene de `.promote` o `.demote`, ese aviso lo manda directamente el comando (para no duplicarlo).
 - **Auto-admin al owner**: si `AUTO_ADMIN_OWNER` está en `true` y el bot ya es admin del grupo, cuando el owner se une, el bot lo asciende automáticamente.
 
 ## Estructura del proyecto

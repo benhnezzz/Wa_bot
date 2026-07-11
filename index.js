@@ -8,7 +8,7 @@ const pino = require("pino");
 const qrcode = require("qrcode-terminal");
 
 const config = require("./config");
-const { isOwner, isOwnerOrCoOwner, getMessageText, isBotAdmin, jidToNumber, requireGroupAdmins } = require("./lib/utils");
+const { isOwner, isOwnerOrCoOwner, getMessageText, isBotAdmin, isBotJid, jidToNumber, requireGroupAdmins } = require("./lib/utils");
 
 const cmdJoin = require("./commands/join");
 const cmdSticker = require("./commands/sticker");
@@ -16,6 +16,7 @@ const { cmdAdd, cmdKick, cmdVaciar } = require("./commands/participants");
 const { cmdSetPP, cmdSetName, cmdSetDesc } = require("./commands/groupSettings");
 const cmdSelfAdmin = require("./commands/selfAdmin");
 const cmdPromote = require("./commands/promote");
+const cmdDemote = require("./commands/demote");
 const cmdCoOwner = require("./commands/coowner");
 const cmdAntilink = require("./commands/antilink");
 const cmdDebugAdmin = require("./commands/debugAdmin");
@@ -63,14 +64,23 @@ async function startBot() {
 
     try {
       if (action === "promote" || action === "demote") {
-        const verb = action === "promote" ? "le dio admin a" : "le quitó el admin a";
-        const authorTag = author ? `@${jidToNumber(author)}` : "Alguien";
-        const targetsTag = participants.map((p) => `@${jidToNumber(p)}`).join(", ");
+        // Si la acción la ejecutó el bot (porque vino de .promote o .demote), esos
+        // comandos ya mandaron su propio aviso mencionando correctamente a quién lo pidió.
+        // Si no filtramos esto, saldría un segundo mensaje atribuyéndole la acción al
+        // número del bot (porque técnicamente es la cuenta del bot la que la ejecuta),
+        // en vez de a la persona real que escribió el comando.
+        const authorIsBot = isBotJid(sock, author);
 
-        await sock.sendMessage(groupId, {
-          text: `👑 ${authorTag} ${verb} ${targetsTag}`,
-          mentions: [author, ...participants].filter(Boolean),
-        });
+        if (!authorIsBot) {
+          const verb = action === "promote" ? "le dio admin a" : "le quitó el admin a";
+          const authorTag = author ? `@${jidToNumber(author)}` : "Alguien";
+          const targetsTag = participants.map((p) => `@${jidToNumber(p)}`).join(", ");
+
+          await sock.sendMessage(groupId, {
+            text: `👑 ${authorTag} ${verb} ${targetsTag}`,
+            mentions: [author, ...participants].filter(Boolean),
+          });
+        }
       }
 
       if (action === "add" && config.AUTO_ADMIN_OWNER) {
@@ -187,8 +197,12 @@ async function startBot() {
           await cmdSelfAdmin(sock, msg, isGroup, senderIsOwnerOrCo);
           break;
 
-        case "adm":
+        case "promote":
           await cmdPromote(sock, msg, args, isGroup, sender);
+          break;
+
+        case "demote":
+          await cmdDemote(sock, msg, args, isGroup, sender);
           break;
 
         case "co":
@@ -234,7 +248,8 @@ async function startBot() {
             `.setpp — cambiar foto del grupo (responde a una imagen)\n` +
             `.setname <texto> — cambiar nombre del grupo\n` +
             `.setdesc <texto> — cambiar descripción del grupo\n` +
-            `.adm <número/mención/respuesta> — dar admin a alguien`;
+            `.promote <número/mención/respuesta> — dar admin a alguien\n` +
+            `.demote <número/mención/respuesta> — quitar admin a alguien`;
 
           const ownerCommands =
             `.join <link> — unirse a un grupo\n` +
