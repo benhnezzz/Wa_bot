@@ -52,6 +52,8 @@ const { trackMessage } = require("./lib/messageStore");
 const cmdClear = require("./commands/clear");
 const { isBanned } = require("./lib/bannedUsers");
 const { cmdBan, cmdUnban } = require("./commands/ban");
+const cmdSetSug = require("./commands/setSug");
+const cmdSug = require("./commands/sug");
 
 // --- Red de seguridad: un error suelto (ej. rate-limit de WhatsApp) no debe
 // tumbar el proceso completo. Solo lo logueamos y seguimos corriendo.
@@ -314,6 +316,14 @@ async function startBot() {
           await cmdUnban(sock, msg, senderIsOwner);
           break;
 
+        case "set_sug":
+          await cmdSetSug(sock, msg, args, isGroup, senderIsOwner);
+          break;
+
+        case "sug":
+          await cmdSug(sock, msg, args, sender);
+          break;
+
         case "block":
           await cmdBlock(sock, msg, args, senderIsOwner);
           break;
@@ -361,6 +371,7 @@ async function startBot() {
             `.ping / .p — latencia y estado del bot\n` +
             `.pull p: <pregunta> o1: <op1> o2: <op2>... — crear encuesta y fijarla\n` +
             `.stalker <nombre> — reporte gracioso de edad/género/nacionalidad probable\n` +
+            `.sug <mensaje> — mandar una sugerencia al staff\n` +
             `.owner — ver contacto del owner y co-owners\n` +
             `.menu / .help — ver esta lista`;
 
@@ -388,6 +399,7 @@ async function startBot() {
             `.clear — borrar los mensajes que el bot vio en este grupo mientras corría\n` +
             `.ban @mención — prohibir que alguien use el bot\n` +
             `.unban @mención — volver a permitirle usar el bot\n` +
+            `.set_sug <id de grupo> — definir el grupo donde llegan las sugerencias (.sug)\n` +
             `.libgp — listar IDs de los grupos donde está el bot\n` +
             `.block <id de grupo> — bloquear un grupo (el bot deja de responder ahí)\n` +
             `.unblock <id de grupo> — desbloquear un grupo\n` +
