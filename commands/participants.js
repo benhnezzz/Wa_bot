@@ -167,11 +167,17 @@ async function cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo) {
     }
   }
 
-  await sock.sendMessage(
-    from,
-    { text: `✅ Grupo vaciado. Eliminados: ${removed}. Fallidos (ej. el creador del grupo no se puede quitar): ${failed}.` },
-    { quoted: msg }
-  );
+  try {
+    await sock.sendMessage(
+      from,
+      { text: `✅ Grupo vaciado. Eliminados: ${removed}. Fallidos (ej. el creador del grupo no se puede quitar): ${failed}.` },
+      { quoted: msg }
+    );
+  } catch (err) {
+    // WhatsApp a veces bloquea temporalmente al bot justo después de una ráfaga de
+    // eliminaciones (anti-spam). No dejamos que esto tumbe el proceso.
+    console.error("No se pudo enviar el resumen de .vc (probablemente rate-limit de WhatsApp):", err.message);
+  }
   // El bot NO sale del grupo (no se llama groupLeave en ningún punto).
 }
 
