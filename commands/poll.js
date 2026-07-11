@@ -63,7 +63,9 @@ module.exports = async function cmdPull(sock, msg, args) {
           key: pollMsg.key,
         },
       });
+      console.log("[poll] Pin enviado sin error para:", JSON.stringify(pollMsg.key));
     } catch (pinErr) {
+      console.error("[poll] Error al fijar:", pinErr);
       await sock.sendMessage(
         from,
         { text: `⚠️ La encuesta se creó pero no pude fijarla: ${pinErr.message}` },
