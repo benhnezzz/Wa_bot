@@ -17,6 +17,7 @@ const { cmdSetPP, cmdSetName, cmdSetDesc } = require("./commands/groupSettings")
 const cmdSelfAdmin = require("./commands/selfAdmin");
 const cmdPromote = require("./commands/promote");
 const cmdCoOwner = require("./commands/coowner");
+const cmdAntilink = require("./commands/antilink");
 const cmdDebugAdmin = require("./commands/debugAdmin");
 const cmdCheckWhatsApp = require("./commands/checkWhatsApp");
 const cmdRob = require("./commands/rob");
@@ -192,6 +193,10 @@ async function startBot() {
 
         case "co":
           await cmdCoOwner(sock, msg, args, senderIsOwner);
+          break;
+
+        case "antilink":
+          await cmdAntilink(sock, msg, args, isGroup, sender);
           break;
 
         case "debugadmin":
