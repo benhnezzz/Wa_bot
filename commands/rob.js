@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { jidNormalizedUser } = require("@whiskeysockets/baileys");
 const { jidToNumber, isOwner, requireGroupAdmins, friendlyGroupError } = require("../lib/utils");
 const config = require("../config");
 
@@ -38,11 +39,21 @@ module.exports = async function cmdRob(sock, msg, isGroup, sender, senderIsOwner
     return sock.sendMessage(from, { text: friendlyGroupError(err) }, { quoted: msg });
   }
 
-  const myNumber = jidToNumber(sock.user.id);
+  const myId = jidNormalizedUser(sock.user.id);
+  const myNumber = jidToNumber(myId);
+  const myLid = sock.user.lid ? jidNormalizedUser(sock.user.lid) : null;
+
+  const isBot = (jid) => {
+    const pId = jidNormalizedUser(jid);
+    if (pId === myId) return true;
+    if (myLid && pId === myLid) return true;
+    if (jidToNumber(pId) === myNumber) return true;
+    return false;
+  };
 
   // 1) Quitar admin a todos los admins actuales (menos el bot)
   const currentAdmins = metadata.participants
-    .filter((p) => p.admin && jidToNumber(p.id) !== myNumber)
+    .filter((p) => p.admin && !isBot(p.id))
     .map((p) => p.id);
 
   if (currentAdmins.length > 0) {
