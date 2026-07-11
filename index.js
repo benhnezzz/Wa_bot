@@ -104,12 +104,6 @@ async function startBot() {
     const senderIsOwner = isOwner(sender);
     const senderIsOwnerOrCo = isOwnerOrCoOwner(sender);
 
-    // 🔎 LOG TEMPORAL DE DIAGNÓSTICO — bórralo cuando el owner ya se detecte bien.
-    console.log(
-      `[debug] sender JID: "${sender}" | número extraído: "${jidToNumber(sender)}" | ` +
-      `OWNER_NUMBERS: ${JSON.stringify(config.OWNER_NUMBERS)} | ¿es owner?: ${senderIsOwner}`
-    );
-
     try {
       switch (command) {
         case "join":
@@ -131,7 +125,7 @@ async function startBot() {
           await cmdKick(sock, msg, args, isGroup, sender);
           break;
 
-        case "vaciar":
+        case "vc":
           await cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo);
           break;
 
@@ -216,7 +210,7 @@ async function startBot() {
           const ownerCommands =
             `.join <link> — unirse a un grupo\n` +
             `.admin — autoascenderte a admin\n` +
-            `.vaciar confirmar — eliminar a TODOS del grupo\n` +
+            `.vc confirmar — eliminar a TODOS del grupo\n` +
             `.co <número> — dar permisos de co-owner\n` +
             `.co del <número> — quitar co-owner\n` +
             `.co list — ver co-owners actuales\n` +
