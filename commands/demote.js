@@ -1,9 +1,9 @@
-const { numberToJid, requireGroupAdmins, friendlyGroupError } = require("../lib/utils");
+const { numberToJid, requireGroupAdmins, isBotJid, friendlyGroupError } = require("../lib/utils");
 
-// .promote (mencionando, respondiendo, o con número) -> da admin a otra persona
+// .demote (mencionando, respondiendo, o con número) -> quita admin a otra persona
 // Requiere que quien use el comando Y el bot sean admins del grupo.
-// El aviso menciona TANTO a quien dio el admin (quien mandó el comando) COMO a quien lo recibió.
-async function cmdPromote(sock, msg, args, isGroup, sender) {
+// El aviso menciona TANTO a quien quitó el admin (quien mandó el comando) COMO a quien lo perdió.
+async function cmdDemote(sock, msg, args, isGroup, sender) {
   const from = msg.key.remoteJid;
 
   if (!isGroup) {
@@ -34,17 +34,25 @@ async function cmdPromote(sock, msg, args, isGroup, sender) {
   if (!targetJid) {
     return sock.sendMessage(
       from,
-      { text: "📌 Uso: .promote <número> o responde/menciona al usuario que quieres hacer admin." },
+      { text: "📌 Uso: .demote <número> o responde/menciona al usuario que quieres quitarle el admin." },
+      { quoted: msg }
+    );
+  }
+
+  if (isBotJid(sock, targetJid)) {
+    return sock.sendMessage(
+      from,
+      { text: "⛔ No puedo quitarme el admin a mí mismo, me dejaría sin permisos para moderar el grupo." },
       { quoted: msg }
     );
   }
 
   try {
-    await sock.groupParticipantsUpdate(from, [targetJid], "promote");
+    await sock.groupParticipantsUpdate(from, [targetJid], "demote");
     await sock.sendMessage(
       from,
       {
-        text: `👑 @${sender.split("@")[0]} le dio admin a @${targetJid.split("@")[0]}`,
+        text: `👑 @${sender.split("@")[0]} le quitó el admin a @${targetJid.split("@")[0]}`,
         mentions: [sender, targetJid],
       },
       { quoted: msg }
@@ -54,4 +62,4 @@ async function cmdPromote(sock, msg, args, isGroup, sender) {
   }
 }
 
-module.exports = cmdPromote;
+module.exports = cmdDemote;
