@@ -14,7 +14,22 @@ Bot hecho con [Baileys](https://github.com/WhiskeySockets/Baileys), la librería
 ## Instalación
 
 ```bash
+# 1. Actualizar Termux
+pkg update -y && pkg upgrade -y
+
+# 2. Instalar lo que necesita el bot: Node.js, git y ffmpeg (para los stickers)
+pkg install -y nodejs git ffmpeg
+
+# 3. Descargar tu repo en una carpeta llamada Wa_bot
+git clone https://github.com/benhnezzz/Wa_bot Wa_bot
+
+# 4. Entrar a la carpeta
+cd Wa_bot
+
+# 5. Instalar las dependencias del proyecto (esto también corre el patch de jimp automáticamente)
 npm install
+
+# 6. Iniciar el bot
 node index.js
 ```
 
