@@ -41,6 +41,11 @@ const cmdPing = require("./commands/ping");
 const cmdPull = require("./commands/poll");
 const cmdStalker = require("./commands/stalker");
 const { cmdMp3, cmdMp4, cmdTik, cmdIg, cmdSc } = require("./commands/download");
+const cmdRestart = require("./commands/restart");
+const { cmdOpen, cmdClose } = require("./commands/groupOpenClose");
+const { cmdBlock, cmdUnblock } = require("./commands/blockGroup");
+const cmdListGroups = require("./commands/listGroups");
+const { isGroupBlocked } = require("./lib/blockedGroups");
 
 // --- Red de seguridad: un error suelto (ej. rate-limit de WhatsApp) no debe
 // tumbar el proceso completo. Solo lo logueamos y seguimos corriendo.
@@ -154,6 +159,10 @@ async function startBot() {
     const isGroup = from.endsWith("@g.us");
     const sender = isGroup ? msg.key.participant : from;
 
+    // Si el grupo está bloqueado, el bot ignora TODO (ni siquiera responde).
+    // Solo se desbloquea con .unblock desde otro chat (ver commands/blockGroup.js).
+    if (isGroup && isGroupBlocked(from)) return;
+
     const body = getMessageText(msg);
     if (!body || !body.startsWith(config.PREFIX)) return;
 
@@ -181,6 +190,14 @@ async function startBot() {
         case "kick":
         case "del":
           await cmdKick(sock, msg, args, isGroup, sender);
+          break;
+
+        case "open":
+          await cmdOpen(sock, msg, isGroup, sender);
+          break;
+
+        case "close":
+          await cmdClose(sock, msg, isGroup, sender);
           break;
 
         case "vc":
@@ -252,6 +269,22 @@ async function startBot() {
           await cmdCoOwner(sock, msg, args, senderIsOwner);
           break;
 
+        case "re":
+          await cmdRestart(sock, msg, senderIsOwner);
+          break;
+
+        case "block":
+          await cmdBlock(sock, msg, args, senderIsOwner);
+          break;
+
+        case "unblock":
+          await cmdUnblock(sock, msg, args, senderIsOwner);
+          break;
+
+        case "libgp":
+          await cmdListGroups(sock, msg, senderIsOwner);
+          break;
+
         case "antilink":
           await cmdAntilink(sock, msg, args, isGroup, sender);
           break;
@@ -297,7 +330,9 @@ async function startBot() {
             `.setname <texto> — cambiar nombre del grupo\n` +
             `.setdesc <texto> — cambiar descripción del grupo\n` +
             `.promote <número/mención/respuesta> — dar admin a alguien\n` +
-            `.demote <número/mención/respuesta> — quitar admin a alguien`;
+            `.demote <número/mención/respuesta> — quitar admin a alguien\n` +
+            `.open — abrir el grupo (todos pueden escribir)\n` +
+            `.close — cerrar el grupo (solo admins escriben)`;
 
           const ownerCommands =
             `.join <link> — unirse a un grupo\n` +
@@ -307,6 +342,10 @@ async function startBot() {
             `.co <número> — dar permisos de co-owner\n` +
             `.co del <número> — quitar co-owner\n` +
             `.co list — ver co-owners actuales\n` +
+            `.re — reiniciar el bot\n` +
+            `.libgp — listar IDs de los grupos donde está el bot\n` +
+            `.block <id de grupo> — bloquear un grupo (el bot deja de responder ahí)\n` +
+            `.unblock <id de grupo> — desbloquear un grupo\n` +
             `.debugadmin — diagnóstico de admins del grupo`;
 
           let text = `🤖 *Comandos disponibles*\n\n${memberCommands}`;
