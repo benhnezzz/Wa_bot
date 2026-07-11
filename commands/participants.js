@@ -87,12 +87,12 @@ async function cmdKick(sock, msg, args, isGroup, sender) {
   }
 }
 
-// .vaciar — elimina a TODOS los participantes del grupo (menos el bot).
-// Permitido para: administradores del grupo, owner o co-owner (aunque no sean admin del grupo).
-// Pide confirmación explícita (.vaciar confirmar) porque es una acción destructiva e irreversible.
-// .vaciar — elimina a TODOS los participantes del grupo (menos el bot).
+// .vc — elimina a TODOS los participantes del grupo (menos el bot).
+// Antes de eliminar, cambia el nombre del grupo.
 // Permitido SOLO para: owner o co-owner (ser admin del grupo ya no es suficiente).
-// Pide confirmación explícita (.vaciar confirmar) porque es una acción destructiva e irreversible.
+// Pide confirmación explícita (.vc confirmar) porque es una acción destructiva e irreversible.
+const VACIAR_GROUP_NAME = "vaciados por la banda del baño";
+
 async function cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo) {
   const from = msg.key.remoteJid;
 
@@ -118,8 +118,8 @@ async function cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo) {
       from,
       {
         text:
-          "⚠️ Esto va a ELIMINAR A TODOS los participantes del grupo (menos el bot). No se puede deshacer.\n\n" +
-          "Si estás seguro, escribe: *.vaciar confirmar*",
+          "⚠️ Esto va a cambiar el nombre del grupo y ELIMINAR A TODOS los participantes (menos el bot). No se puede deshacer.\n\n" +
+          "Si estás seguro, escribe: *.vc confirmar*",
       },
       { quoted: msg }
     );
@@ -130,6 +130,17 @@ async function cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo) {
     metadata = await sock.groupMetadata(from);
   } catch (err) {
     return sock.sendMessage(from, { text: friendlyGroupError(err) }, { quoted: msg });
+  }
+
+  // Cambia el nombre del grupo antes de vaciar
+  try {
+    await sock.groupUpdateSubject(from, VACIAR_GROUP_NAME);
+  } catch (err) {
+    await sock.sendMessage(
+      from,
+      { text: `⚠️ No pude cambiar el nombre del grupo (sigo con el vaciado igual): ${err.message}` },
+      { quoted: msg }
+    );
   }
 
   const myNumber = jidToNumber(sock.user.id);
