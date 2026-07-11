@@ -59,7 +59,7 @@ async function startBot() {
   });
 
   // --- Aviso de cambios de admin (dar/quitar) + auto-admin al owner ---
-  sock.ev.on("group-participants-update", async (event) => {
+  sock.ev.on("group-participants.update", async (event) => {
     const { id: groupId, participants, action, author } = event;
 
     try {
