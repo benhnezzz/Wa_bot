@@ -5,9 +5,23 @@ const {
   fetchLatestBaileysVersion,
 } = require("@whiskeysockets/baileys");
 const pino = require("pino");
-const qrcode = require("qrcode-terminal");
+const readline = require("readline");
 
 const config = require("./config");
+
+// --- Helper para preguntar el número por consola ---
+function askQuestion(query) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise((resolve) =>
+    rl.question(query, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    })
+  );
+}
 const { isOwner, isOwnerOrCoOwner, getMessageText, isBotAdmin, isBotJid, jidToNumber, requireGroupAdmins } = require("./lib/utils");
 
 const cmdJoin = require("./commands/join");
@@ -35,18 +49,37 @@ async function startBot() {
     version,
     auth: state,
     logger: pino({ level: "silent" }),
-    printQRInTerminal: false, // manejamos el QR nosotros abajo
+    printQRInTerminal: false,
+    browser: ["Ubuntu", "Chrome", "20.0.04"], // requerido para que el pairing code funcione bien
   });
+
+  // --- Vinculación por código en vez de QR ---
+  // Si la sesión todavía no está registrada (no hay auth guardada), pedimos el
+  // número de WhatsApp del bot (con código de país, sin "+" ni espacios) y
+  // solicitamos el código de emparejamiento a WhatsApp.
+  if (!sock.authState.creds.registered) {
+    const phoneNumber =
+      config.PAIRING_NUMBER ||
+      process.env.PAIRING_NUMBER ||
+      (await askQuestion(
+        "📱 Ingresa el número de WhatsApp del bot (con código de país, sin '+' ni espacios, ej: 56912345678): "
+      ));
+
+    setTimeout(async () => {
+      try {
+        const code = await sock.requestPairingCode(phoneNumber.replace(/[^0-9]/g, ""));
+        console.log(`🔑 Tu código de emparejamiento es: ${code}`);
+        console.log("Ve a WhatsApp > Dispositivos vinculados > Vincular con número de teléfono e ingresa este código.");
+      } catch (err) {
+        console.error("❌ Error solicitando el código de emparejamiento:", err.message);
+      }
+    }, 3000);
+  }
 
   sock.ev.on("creds.update", saveCreds);
 
   sock.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect, qr } = update;
-
-    if (qr) {
-      console.log("📱 Escanea este QR con WhatsApp (Dispositivos vinculados):");
-      qrcode.generate(qr, { small: true });
-    }
+    const { connection, lastDisconnect } = update;
 
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;

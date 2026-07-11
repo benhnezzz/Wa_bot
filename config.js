@@ -14,6 +14,13 @@ module.exports = {
     ? process.env.OWNER_NUMBERS.split(",")
     : ["56512222222", "79401697992881", "148039671009295"],
 
+  // Número de WhatsApp DEL BOT (el que se va a vincular), en formato
+  // internacional SIN "+" ni espacios. Ej: "56912345678".
+  // Si lo dejas vacío (""), el bot te lo va a preguntar por consola cada vez
+  // que necesite vincularse (solo pasa si no existe auth_info/ o se borró).
+  // También se puede definir con la variable de entorno PAIRING_NUMBER.
+  PAIRING_NUMBER: process.env.PAIRING_NUMBER || "",
+
   // Prefijo de los comandos
   PREFIX: ".",
 
