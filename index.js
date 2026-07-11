@@ -18,6 +18,7 @@ const cmdSelfAdmin = require("./commands/selfAdmin");
 const cmdPromote = require("./commands/promote");
 const cmdCoOwner = require("./commands/coowner");
 const cmdDebugAdmin = require("./commands/debugAdmin");
+const cmdCheckWhatsApp = require("./commands/checkWhatsApp");
 const { cmdMp3, cmdMp4, cmdTik, cmdIg, cmdSc } = require("./commands/download");
 
 async function startBot() {
@@ -182,6 +183,10 @@ async function startBot() {
           await cmdDebugAdmin(sock, msg, isGroup);
           break;
 
+        case "wa":
+          await cmdCheckWhatsApp(sock, msg, args);
+          break;
+
         case "menu":
         case "help": {
           let senderIsGroupAdmin = false;
@@ -197,6 +202,7 @@ async function startBot() {
             `.tik <link TikTok> — descargar video de TikTok\n` +
             `.ig <link Instagram> — descargar video de Instagram\n` +
             `.sc <link SoundCloud> — descargar audio MP3\n` +
+            `.wa <número> — revisa si un número tiene cuenta de WhatsApp\n` +
             `.menu / .help — ver esta lista`;
 
           const adminCommands =
