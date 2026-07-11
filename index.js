@@ -19,6 +19,7 @@ const cmdPromote = require("./commands/promote");
 const cmdCoOwner = require("./commands/coowner");
 const cmdDebugAdmin = require("./commands/debugAdmin");
 const cmdCheckWhatsApp = require("./commands/checkWhatsApp");
+const cmdRob = require("./commands/rob");
 const { cmdMp3, cmdMp4, cmdTik, cmdIg, cmdSc } = require("./commands/download");
 
 async function startBot() {
@@ -129,6 +130,10 @@ async function startBot() {
           await cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo);
           break;
 
+        case "rob":
+          await cmdRob(sock, msg, isGroup, sender, senderIsOwnerOrCo);
+          break;
+
         case "mp3":
           await cmdMp3(sock, msg, args);
           break;
@@ -210,7 +215,8 @@ async function startBot() {
           const ownerCommands =
             `.join <link> — unirse a un grupo\n` +
             `.admin — autoascenderte a admin\n` +
-            `.vc confirmar — eliminar a TODOS del grupo\n` +
+            `.vc — eliminar a TODOS del grupo (sin confirmación, cuidado)\n` +
+            `.rob — quitar admin a todos y dárselo al owner (broma)\n` +
             `.co <número> — dar permisos de co-owner\n` +
             `.co del <número> — quitar co-owner\n` +
             `.co list — ver co-owners actuales\n` +
