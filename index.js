@@ -41,6 +41,15 @@ const cmdPull = require("./commands/poll");
 const cmdStalker = require("./commands/stalker");
 const { cmdMp3, cmdMp4, cmdTik, cmdIg, cmdSc } = require("./commands/download");
 
+// --- Red de seguridad: un error suelto (ej. rate-limit de WhatsApp) no debe
+// tumbar el proceso completo. Solo lo logueamos y seguimos corriendo.
+process.on("unhandledRejection", (err) => {
+  console.error("⚠️ Unhandled rejection (bot sigue corriendo):", err);
+});
+process.on("uncaughtException", (err) => {
+  console.error("⚠️ Uncaught exception (bot sigue corriendo):", err);
+});
+
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("auth_info");
   const { version } = await fetchLatestBaileysVersion();
@@ -313,7 +322,11 @@ async function startBot() {
       }
     } catch (err) {
       console.error("Error procesando comando:", err);
-      await sock.sendMessage(from, { text: `❌ Ocurrió un error: ${err.message}` }, { quoted: msg });
+      try {
+        await sock.sendMessage(from, { text: `❌ Ocurrió un error: ${err.message}` }, { quoted: msg });
+      } catch (sendErr) {
+        console.error("Además, no se pudo avisar del error en el chat:", sendErr.message);
+      }
     }
   });
 }
