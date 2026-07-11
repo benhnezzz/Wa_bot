@@ -9,15 +9,10 @@ async function cmdSetPP(sock, msg, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  const { senderIsAdmin } = await requireGroupAdmins(sock, from, sender);
   if (!senderIsAdmin) {
     return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
   }
-  if (!botIsAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
-  }
-
-  const quoted = getQuotedMessage(msg);
   const directImage = msg.message?.imageMessage;
   const quotedImage = quoted?.message?.imageMessage;
 
@@ -49,12 +44,9 @@ async function cmdSetName(sock, msg, args, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  const { senderIsAdmin } = await requireGroupAdmins(sock, from, sender);
   if (!senderIsAdmin) {
     return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
-  }
-  if (!botIsAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
 
   const newName = args.join(" ");
@@ -78,12 +70,9 @@ async function cmdSetDesc(sock, msg, args, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  const { senderIsAdmin } = await requireGroupAdmins(sock, from, sender);
   if (!senderIsAdmin) {
     return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
-  }
-  if (!botIsAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
 
   const newDesc = args.join(" ");

@@ -10,12 +10,9 @@ async function cmdAdd(sock, msg, args, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  const { senderIsAdmin } = await requireGroupAdmins(sock, from, sender);
   if (!senderIsAdmin) {
     return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
-  }
-  if (!botIsAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
 
   const number = args[0];
@@ -51,12 +48,9 @@ async function cmdKick(sock, msg, args, isGroup, sender) {
     return sock.sendMessage(from, { text: "⛔ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
-  const { senderIsAdmin, botIsAdmin } = await requireGroupAdmins(sock, from, sender);
+  const { senderIsAdmin } = await requireGroupAdmins(sock, from, sender);
   if (!senderIsAdmin) {
     return sock.sendMessage(from, { text: "⛔ Solo un administrador del grupo puede usar este comando." }, { quoted: msg });
-  }
-  if (!botIsAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
 
   const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid;
@@ -110,11 +104,6 @@ async function cmdVaciar(sock, msg, args, isGroup, sender, senderIsOwnerOrCo) {
       { text: "⛔ Solo el owner o un co-owner pueden usar este comando." },
       { quoted: msg }
     );
-  }
-
-  const { botIsAdmin } = await requireGroupAdmins(sock, from, sender);
-  if (!botIsAdmin) {
-    return sock.sendMessage(from, { text: "⛔ Necesito ser administrador del grupo para hacer esto." }, { quoted: msg });
   }
 
   let metadata;
