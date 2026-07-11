@@ -2,11 +2,21 @@ const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const config = require("../config");
 
 const TMP_DIR = path.join(__dirname, "..", "tmp");
+const COOKIES_DIR = path.join(__dirname, "..", "data", "cookies");
 
 function ensureTmpDir() {
   if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
+}
+
+// Busca un archivo de cookies para el sitio dado (instagram.txt, tiktok.txt, etc.)
+// Se coloca manualmente en data/cookies/<sitio>.txt (formato Netscape, exportado del
+// navegador con la extensión "Get cookies.txt LOCALLY" estando logueado en tu propia cuenta).
+function getCookiesPath(site) {
+  const filePath = path.join(COOKIES_DIR, `${site}.txt`);
+  return fs.existsSync(filePath) ? filePath : null;
 }
 
 // Corre yt-dlp como proceso externo. Requiere tenerlo instalado en el sistema
@@ -67,6 +77,16 @@ const USAGE = {
   sc: "📌 Uso: .sc <link de SoundCloud>",
 };
 
+// Mensaje de ayuda específico para cuando Instagram rechaza la descarga por falta de sesión
+const IG_AUTH_HELP =
+  "⚠️ Instagram está pidiendo estar logueado para este contenido (pasa incluso con posts públicos últimamente).\n\n" +
+  "Para arreglarlo, el owner del bot debe:\n" +
+  "1. Instalar la extensión *Get cookies.txt LOCALLY* en Chrome/Firefox\n" +
+  "2. Iniciar sesión en instagram.com con SU propia cuenta\n" +
+  "3. Exportar las cookies de ese sitio con la extensión\n" +
+  "4. Guardar ese archivo como: data/cookies/instagram.txt\n\n" +
+  "Después de eso, .ig debería funcionar con posts que esa cuenta pueda ver normalmente.";
+
 async function downloadAndSend(sock, msg, args, type) {
   const from = msg.key.remoteJid;
   const url = args[0];
@@ -94,15 +114,17 @@ async function downloadAndSend(sock, msg, args, type) {
 
   await sock.sendMessage(from, { text: "⏳ Descargando, dame un momento..." }, { quoted: msg });
 
+  // Sitio para buscar cookies (mismo nombre que usamos para el archivo en data/cookies/)
+  const cookieSiteMap = { ig: "instagram", tik: "tiktok", mp3: "youtube", mp4: "youtube", sc: "soundcloud" };
+  const cookiesPath = getCookiesPath(cookieSiteMap[type]);
+  const cookieArgs = cookiesPath ? ["--cookies", cookiesPath] : [];
+
   let ytArgs;
   if (type === "mp3" || type === "sc") {
-    ytArgs = ["-x", "--audio-format", "mp3", "--audio-quality", "0", "--no-playlist", "-o", outputTemplate, url];
+    ytArgs = [...cookieArgs, "-x", "--audio-format", "mp3", "--audio-quality", "0", "--no-playlist", "-o", outputTemplate, url];
   } else if (type === "mp4") {
-    // Limitado a 480p, y forzado a H.264/AAC (vcodec avc1) porque WhatsApp no reproduce
-    // bien video en VP9/AV1 aunque venga empaquetado en .mp4. --remux-video + faststart
-    // aseguran que el índice del archivo (moov atom) quede al inicio, que es lo que
-    // suele causar el error "algo falló con el archivo de video" en WhatsApp.
     ytArgs = [
+      ...cookieArgs,
       "-f",
       "bestvideo[height<=480][vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[height<=480][vcodec^=avc1]/best[ext=mp4][vcodec^=avc1]/best[height<=480]/best",
       "--merge-output-format",
@@ -117,9 +139,8 @@ async function downloadAndSend(sock, msg, args, type) {
       url,
     ];
   } else {
-    // tik / ig — normalmente ya vienen en H.264/AAC, pero igual forzamos remux a mp4
-    // con faststart por si el contenedor original no es compatible con el player de WhatsApp.
     ytArgs = [
+      ...cookieArgs,
       "-f",
       "best[ext=mp4]/best",
       "--remux-video",
@@ -162,7 +183,13 @@ async function downloadAndSend(sock, msg, args, type) {
       await sock.sendMessage(from, { video: buffer, mimetype: "video/mp4" }, { quoted: msg });
     }
   } catch (err) {
-    await sock.sendMessage(from, { text: `❌ No se pudo descargar: ${err.message}` }, { quoted: msg });
+    const isIgAuthError = type === "ig" && /empty media response|login|rate-limit|not available/i.test(err.message);
+
+    if (isIgAuthError && !cookiesPath) {
+      await sock.sendMessage(from, { text: IG_AUTH_HELP }, { quoted: msg });
+    } else {
+      await sock.sendMessage(from, { text: `❌ No se pudo descargar: ${err.message}` }, { quoted: msg });
+    }
   } finally {
     if (filePath && fs.existsSync(filePath)) {
       try {
