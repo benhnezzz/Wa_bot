@@ -18,6 +18,10 @@ module.exports = {
         ? process.env.OWNER_LIDS.split(",")
         : ["79401697992881", "148039671009295"],
     },
+    {
+      number: "56712222222",
+      lids: ["148039671009295"],
+    },
   ],
 
   // Número de WhatsApp DEL BOT (el que se va a vincular), en formato
