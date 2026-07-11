@@ -27,6 +27,7 @@ const { isRestarting } = require("./lib/restartFlag");
 
 const cmdJoin = require("./commands/join");
 const cmdSticker = require("./commands/sticker");
+const cmdRs = require("./commands/rs");
 const { cmdAdd, cmdKick, cmdVaciar } = require("./commands/participants");
 const { cmdSetPP, cmdSetName, cmdSetDesc } = require("./commands/groupSettings");
 const cmdSelfAdmin = require("./commands/selfAdmin");
@@ -209,6 +210,10 @@ async function startBot() {
           await cmdSticker(sock, msg, args);
           break;
 
+        case "rs":
+          await cmdRs(sock, msg, args);
+          break;
+
         case "agg":
         case "add":
           await cmdAdd(sock, msg, args, isGroup, sender);
@@ -362,6 +367,7 @@ async function startBot() {
 
           const memberCommands =
             `.sticker <nombre paquete> — crear sticker (responde a imagen/video)\n` +
+            `.rs <paquete> | <autor> — robar sticker, cambia nombre/autor (responde a un sticker)\n` +
             `.mp3 <link YouTube> — descargar audio MP3\n` +
             `.mp4 <link YouTube> — descargar video MP4\n` +
             `.tik <link TikTok> — descargar video de TikTok\n` +
