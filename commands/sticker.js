@@ -84,6 +84,11 @@ async function addStickerMetadata(webpBuffer, packName, author) {
 }
 
 module.exports = async function cmdSticker(sock, msg, args) {
+  return cmdStickerImpl(sock, msg, args);
+};
+module.exports.addStickerMetadata = addStickerMetadata;
+
+async function cmdStickerImpl(sock, msg, args) {
   const from = msg.key.remoteJid;
 
   const quoted = getQuotedMessage(msg);
@@ -146,4 +151,4 @@ module.exports = async function cmdSticker(sock, msg, args) {
       { quoted: msg }
     );
   }
-};
+}
