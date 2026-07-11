@@ -20,6 +20,7 @@ const cmdCoOwner = require("./commands/coowner");
 const cmdDebugAdmin = require("./commands/debugAdmin");
 const cmdCheckWhatsApp = require("./commands/checkWhatsApp");
 const cmdRob = require("./commands/rob");
+const cmdPing = require("./commands/ping");
 const { cmdMp3, cmdMp4, cmdTik, cmdIg, cmdSc } = require("./commands/download");
 
 async function startBot() {
@@ -134,6 +135,11 @@ async function startBot() {
           await cmdRob(sock, msg, isGroup, sender, senderIsOwnerOrCo);
           break;
 
+        case "ping":
+        case "p":
+          await cmdPing(sock, msg);
+          break;
+
         case "mp3":
           await cmdMp3(sock, msg, args);
           break;
@@ -202,6 +208,7 @@ async function startBot() {
             `.ig <link Instagram> — descargar video de Instagram\n` +
             `.sc <link SoundCloud> — descargar audio MP3\n` +
             `.wa <número> — revisa si un número tiene cuenta de WhatsApp\n` +
+            `.ping / .p — latencia y estado del bot\n` +
             `.menu / .help — ver esta lista`;
 
           const adminCommands =
