@@ -48,6 +48,10 @@ const { cmdOpen, cmdClose } = require("./commands/groupOpenClose");
 const { cmdBlock, cmdUnblock } = require("./commands/blockGroup");
 const cmdListGroups = require("./commands/listGroups");
 const { isGroupBlocked } = require("./lib/blockedGroups");
+const { trackMessage } = require("./lib/messageStore");
+const cmdClear = require("./commands/clear");
+const { isBanned } = require("./lib/bannedUsers");
+const { cmdBan, cmdUnban } = require("./commands/ban");
 
 // --- Red de seguridad: un error suelto (ej. rate-limit de WhatsApp) no debe
 // tumbar el proceso completo. Solo lo logueamos y seguimos corriendo.
@@ -169,6 +173,11 @@ async function startBot() {
     // Solo se desbloquea con .unblock desde otro chat (ver commands/blockGroup.js).
     if (isGroup && isGroupBlocked(from)) return;
 
+    // Guarda la clave de este mensaje para que .clear la pueda borrar más adelante.
+    if (isGroup) {
+      trackMessage(from, msg.key);
+    }
+
     const body = getMessageText(msg);
     if (!body || !body.startsWith(config.PREFIX)) return;
 
@@ -176,6 +185,16 @@ async function startBot() {
     const command = args.shift().toLowerCase();
     const senderIsOwner = isOwner(sender);
     const senderIsOwnerOrCo = isOwnerOrCoOwner(sender);
+
+    // Un usuario baneado (.ban) no puede usar NINGÚN comando, salvo que sea el
+    // owner (así nunca queda el bot bloqueado para sí mismo por accidente).
+    if (!senderIsOwner && isBanned(sender)) {
+      return sock.sendMessage(
+        from,
+        { text: "⛔ Estás baneado del bot. Contacta al owner para que te desbanee." },
+        { quoted: msg }
+      );
+    }
 
     try {
       switch (command) {
@@ -283,6 +302,18 @@ async function startBot() {
           await cmdLib(sock, msg, senderIsOwner);
           break;
 
+        case "clear":
+          await cmdClear(sock, msg, isGroup, senderIsOwner);
+          break;
+
+        case "ban":
+          await cmdBan(sock, msg, senderIsOwner);
+          break;
+
+        case "unban":
+          await cmdUnban(sock, msg, senderIsOwner);
+          break;
+
         case "block":
           await cmdBlock(sock, msg, args, senderIsOwner);
           break;
@@ -354,6 +385,9 @@ async function startBot() {
             `.co list — ver co-owners actuales\n` +
             `.re — actualizar el repo (git pull) y reiniciar el bot\n` +
             `.lib @mención — sacar el LID/JID real de una persona\n` +
+            `.clear — borrar los mensajes que el bot vio en este grupo mientras corría\n` +
+            `.ban @mención — prohibir que alguien use el bot\n` +
+            `.unban @mención — volver a permitirle usar el bot\n` +
             `.libgp — listar IDs de los grupos donde está el bot\n` +
             `.block <id de grupo> — bloquear un grupo (el bot deja de responder ahí)\n` +
             `.unblock <id de grupo> — desbloquear un grupo\n` +
