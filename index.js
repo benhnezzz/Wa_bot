@@ -21,6 +21,7 @@ const cmdDebugAdmin = require("./commands/debugAdmin");
 const cmdCheckWhatsApp = require("./commands/checkWhatsApp");
 const cmdRob = require("./commands/rob");
 const cmdPing = require("./commands/ping");
+const cmdPull = require("./commands/poll");
 const { cmdMp3, cmdMp4, cmdTik, cmdIg, cmdSc } = require("./commands/download");
 
 async function startBot() {
@@ -140,6 +141,10 @@ async function startBot() {
           await cmdPing(sock, msg);
           break;
 
+        case "pull":
+          await cmdPull(sock, msg, args);
+          break;
+
         case "mp3":
           await cmdMp3(sock, msg, args);
           break;
@@ -209,6 +214,7 @@ async function startBot() {
             `.sc <link SoundCloud> — descargar audio MP3\n` +
             `.wa <número> — revisa si un número tiene cuenta de WhatsApp\n` +
             `.ping / .p — latencia y estado del bot\n` +
+            `.pull p: <pregunta> o1: <op1> o2: <op2>... — crear encuesta y fijarla\n` +
             `.menu / .help — ver esta lista`;
 
           const adminCommands =
