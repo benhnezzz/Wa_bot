@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const { jidNormalizedUser } = require("@whiskeysockets/baileys");
 const { jidToNumber, isOwner, requireGroupAdmins, friendlyGroupError } = require("../lib/utils");
-const config = require("../config");
 
 // .rob — broma de grupo:
 // 1) quita admin a todos los admins actuales (menos el bot)
@@ -67,7 +66,7 @@ module.exports = async function cmdRob(sock, msg, isGroup, sender, senderIsOwner
   // 2) Darle admin al owner (si está en el grupo)
   const ownerInGroup = metadata.participants
     .map((p) => p.id)
-    .filter((jid) => isOwner(jid) && config.OWNER_NUMBERS.includes(jidToNumber(jid)));
+    .filter((jid) => isOwner(jid));
 
   if (ownerInGroup.length > 0) {
     try {
