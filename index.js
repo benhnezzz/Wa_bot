@@ -29,6 +29,14 @@ const cmdJoin = require("./commands/join");
 const cmdSticker = require("./commands/sticker");
 const cmdRs = require("./commands/rs");
 const cmdPf = require("./commands/pf");
+const cmdSex = require("./commands/sex");
+const cmdKiss = require("./commands/kiss");
+const cmdAnal = require("./commands/anal");
+const cmdBlowjob = require("./commands/blowjob");
+const cmdCum = require("./commands/cum");
+const cmdSpank = require("./commands/spank");
+const cmdThighjob = require("./commands/thighjob");
+const cmdCreampie = require("./commands/creampie");
 const { cmdAdd, cmdKick, cmdVaciar } = require("./commands/participants");
 const { cmdSetPP, cmdSetName, cmdSetDesc } = require("./commands/groupSettings");
 const cmdSelfAdmin = require("./commands/selfAdmin");
@@ -219,6 +227,39 @@ async function startBot() {
           await cmdPf(sock, msg);
           break;
 
+        case "sex":
+          await cmdSex(sock, msg);
+          break;
+
+        case "kiss":
+          await cmdKiss(sock, msg);
+          break;
+
+        case "anal":
+          await cmdAnal(sock, msg);
+          break;
+
+        case "blowjob":
+        case "bj":
+          await cmdBlowjob(sock, msg);
+          break;
+
+        case "cum":
+          await cmdCum(sock, msg);
+          break;
+
+        case "spank":
+          await cmdSpank(sock, msg);
+          break;
+
+        case "thighjob":
+          await cmdThighjob(sock, msg);
+          break;
+
+        case "creampie":
+          await cmdCreampie(sock, msg);
+          break;
+
         case "agg":
         case "add":
           await cmdAdd(sock, msg, args, isGroup, sender);
@@ -374,6 +415,7 @@ async function startBot() {
             `.sticker <nombre paquete> — crear sticker (responde a imagen/video)\n` +
             `.rs <paquete> | <autor> — robar sticker, cambia nombre/autor (responde a un sticker)\n` +
             `.pf @mención — foto de perfil de alguien del grupo (sin mención: la tuya)\n` +
+            `.sex / .kiss / .anal / .bj / .cum / .spank / .thighjob / .creampie — comandos +18 (responde o menciona)\n` +
             `.mp3 <link YouTube> — descargar audio MP3\n` +
             `.mp4 <link YouTube> — descargar video MP4\n` +
             `.tik <link TikTok> — descargar video de TikTok\n` +
